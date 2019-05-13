@@ -7,16 +7,14 @@ class Menu(object):
         self.window = stdscreen.subwin(0,0)
         self.window.keypad(True)
 
-        # avoids flickering on refresh
-        self.panel = panel.new_panel(self.window)
-        panel.update_panels()
-
-        self.position = 0
         self.items = items
         self.items.append(('exit','exit'))
-        self.item_length = max([len(i[0]) for i in self.items]) + 11
-        self.item_height = 5
-        self.item_windows = [curses.newwin(self.item_height, self.item_length, self.item_height * i, 1) for i in range(len(items))]
+        self.item_length = curses.COLS - 2
+        self.item_height = 3
+        self.item_windows = [curses.newwin(self.item_height, self.item_length,
+                                           self.item_height * i, 1)
+                             for i in range(len(self.items))]
+        self.position = 0
 
     def navigate(self, n):
         self.position += n
@@ -25,12 +23,21 @@ class Menu(object):
         elif self.position >= len(self.items):
             self.position = len(self.items)-1
 
-    def display(self):
+    def resize(self):
+        curses.update_lines_cols();
+        self.item_length = curses.COLS - 2
+        self.item_windows = [curses.newwin(self.item_height, self.item_length,
+                                           self.item_height * i, 1)
+                             for i in range(len(self.items))]
         self.window.clear()
+        self.window.refresh()
+
+    def display(self):
+        self.resize()
+        self.window.clear()
+        self.window.refresh()
 
         while True:
-            self.window.refresh()
-
             # draw menu
             for index, item in enumerate(self.items):
                 if index == self.position:
@@ -41,7 +48,9 @@ class Menu(object):
                 # draw menu box
                 msg = item[0]
                 self.item_windows[index].box()
-                self.item_windows[index].addstr(self.item_height // 2, (self.item_length - len(msg)) // 2, msg, mode)
+                self.item_windows[index].addstr(self.item_height // 2,
+                                                (self.item_length - len(msg)) // 2,
+                                                msg, mode)
                 self.item_windows[index].refresh()
 
             # wait on input
@@ -52,12 +61,17 @@ class Menu(object):
                     break
                 else:
                     self.items[self.position][1]()
+                    self.resize()
 
             elif key == curses.KEY_UP:
                 self.navigate(-1)
 
             elif key == curses.KEY_DOWN:
                 self.navigate(1)
+
+            elif key == curses.KEY_RESIZE:
+                self.resize()
+
 
 class MyApp(object):
 
