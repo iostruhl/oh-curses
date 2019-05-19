@@ -1,7 +1,3 @@
-class Deck:
-    trump_suit = ""
-    lead_suit = ""
-
 class Card:
     rank_values = {
         "2"  : 2,
@@ -50,39 +46,47 @@ class Card:
     def color(self) -> int:
         return self.colors[self.suit]
 
-    def __lt__(self, other):
-        assert(Deck.trump_suit and Deck.lead_suit)
-        if self.__class__ == other.__class__:
-            if (self.suit == Deck.trump_suit):
-                if (other.suit == Deck.trump_suit):
-                    return self.value < other.value
-                else:
-                    return False
-            elif (other.suit == Deck.trump_suit):
-                return True
-            elif (self.suit == Deck.lead_suit):
-                if (other.suit == Deck.lead_suit):
-                    return self.value < other.value
-                else:
-                    return False
-            elif (other.suit == Deck.lead_suit):
-                return True
-            else:
-                return False
-        return NotImplemented
+    def trick_value(self, led_suit, trump_suit) -> int:
+        if (self.suit == trump_suit):
+            return 100 + self.value
+        if (self.suit == led_suit):
+            return self.value
+        return 0
 
-    def __eq__(self, other):
-        assert(Deck.trump_suit and Deck.lead_suit)
-        if self.__class__ == other.__class__:
-            if (self.suit != Deck.trump_suit and self.suit != Deck.lead_suit and
-                other.suit != Deck.trump_suit and other.suit != Deck.trump_suit):
-                return True
-            else:
-                return False
-        return NotImplemented
+    # # sorry, this was a good idea, but I had no idea how to pass in globals
+    # def __lt__(self, other):
+    #     assert(Globals.trump_suit and Globals.led_suit)
+    #     if self.__class__ == other.__class__:
+    #         if (self.suit == Globals.trump_suit):
+    #             if (other.suit == Globals.trump_suit):
+    #                 return self.value < other.value
+    #             else:
+    #                 return False
+    #         elif (other.suit == Globals.trump_suit):
+    #             return True
+    #         elif (self.suit == Globals.led_suit):
+    #             if (other.suit == Globals.led_suit):
+    #                 return self.value < other.value
+    #             else:
+    #                 return False
+    #         elif (other.suit == Globals.led_suit):
+    #             return True
+    #         else:
+    #             return False
+    #     return NotImplemented
+
+    # def __eq__(self, other):
+    #     assert(Globals.trump_suit and Globals.led_suit)
+    #     if self.__class__ == other.__class__:
+    #         if (self.suit != Globals.trump_suit and self.suit != Globals.led_suit and
+    #             other.suit != Globals.trump_suit and other.suit != Globals.trump_suit):
+    #             return True
+    #         else:
+    #             return False
+    #     return NotImplemented
 
     def __repr__(self):
-        return "Card({:s}{:s})".format(self.rank, self.suit_ascii[self.suit])
+        return "{:s}{:s}".format(self.rank, self.suit_ascii[self.suit])
 
     def ascii_rep(self) -> str:
         if (self.visible):
