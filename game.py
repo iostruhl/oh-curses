@@ -1,7 +1,6 @@
 import curses
-from curses import panel
 
-class Menu(object):
+class Menu:
 
     def __init__(self, items, stdscreen):
         self.window = stdscreen.subwin(0,0)
@@ -73,7 +72,7 @@ class Menu(object):
                 self.resize()
 
 
-class MyApp(object):
+class MyApp:
 
     def __init__(self, stdscreen):
         self.screen = stdscreen

@@ -76,4 +76,11 @@ class Card:
         }
         return colors[self.suit]
 
-
+if __name__ == "__main__":
+    c = Card("K", "clubs")
+    d = Card("10", "diamonds")
+    print(c.ascii_rep())
+    c.set_visible()
+    d.set_visible()
+    print(c.ascii_rep())
+    print(d.ascii_rep())
