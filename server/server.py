@@ -1,71 +1,158 @@
 import sys
 import gameboard
 from time import sleep, localtime
-
+from card import Card
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
 
 class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
-        self.nickname = "anonymous"
-        super().__init__(self, *args, **kwargs)
+        self.name = "ANON"
+        Channel.__init__(self, *args, **kwargs)
     
     def Close(self):
-        self._server.DelPlayer(self)
+        self._server.remove_player(self)
     
     ##################################
     ### Network specific callbacks ###
     ##################################
     
-    def Network_message(self, data):
-        self._server.SendToAll({"action": "message", "message": data['message'], "who": self.nickname})
-    
-    def Network_nickname(self, data):
-        self.name = data['nickname']
-        self._server.SendPlayers()
+    def Network_name(self, data):
+        print("Client", self.name, "sent", data)
+        self.name = data['name']
+        self._server.send_users()
+
+    def Network_bid(self, data):
+        print("Client", self.name, "sent", data)
+        self._server.handle_bid(self.name, data['bid'])
+
+    def Network_play(self, data):
+        print("Client", self.name, "sent", data)
+        self._server.handle_play_card(self.name, data['card'])
+
 
 class OHServer(Server):
     channelClass = ClientChannel
     
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        Server.__init__(self, *args, **kwargs)
         self.users = []
+        self.name_to_user = dict()
+        self.runnable = True
+        self.hand_num = 1
+        self.scores = dict()
+        self.next_to_play_idx = 0
         self.gb = None
         print("Server launched")
     
     def Connected(self, channel, addr):
-        self.add_player(channel)
+        self.add_user(channel)
     
-    def add_player(self, player):
-        print("New Player" + str(player.addr))
-        self.users[player] = player.name
-        self.send_players()
-        print("players", [p for p in self.players])
-        if (len(self.players) == 4):
-            if (self.gb):
-                self.resume_game()
-            else:
-                self.start_game()
+    def add_user(self, user):
+        print("New Player" + str(user.addr))
+        self.users.append(user)
     
     def remove_player(self, player):
         print("Remove Player" + str(player.addr))
-        self.players.remove(player)
+        self.users.remove(player)
         if (self.gb):
+            self.runnable = False
             self.send_pause()
 
     def send_pause(self):
-        self.send_all({"action": "pause"})
+        self.send_all({'action': "pause"})
     
-    def send_players(self):
-        self.send_all({"action": "players", "players": [p.nickname for p in self.players]})
+    def send_users(self):
+        self.send_all({'action': "users", 'users': [u.name for u in self.users]})
+        if (len(self.users) == 4 and (u.name != "ANON" for u in self.users)):
+            print(len(self.users), [u.name for u in self.users])
+            print("STARTING!!!")
+            self.start_game()
     
     def send_all(self, data):
-        [p.Send(data) for p in self.players]
+        print("Server: sending to ALL :", data)
+        [u.Send(data) for u in self.users]
+
+    def send_one(self, name, data):
+        print("Server: sending to", name, ":", data)
+        self.name_to_user[name].Send(data)
     
     def Launch(self):
         while True:
             self.Pump()
             sleep(0.0001)
+
+    # --- Game Logic ---
+    def start_game(self):
+        assert(self.runnable)
+        self.gb = gameboard.GameBoard(players = [u.name for u in self.users])
+        self.name_to_user = {u.name:u for u in self.users}
+        self.scores = {u.name:0 for u in self.users}
+
+        self.start_hand()
+
+
+    def start_hand(self):
+        self.gb.deal_hand(self.hand_num)
+        for player in self.gb.players:
+            print("Sending to", player)
+            self.send_one(player, {'action': "hand_dealt", 'trump_suit': self.gb.trump_suit, 'hand': [c.to_array() for c in self.gb.hands[player]]})
+        # self.send_all({'action': "hand_dealt", 'trump_suit': self.gb.trump_suit})
+        sleep(5)
+        self.send_one(self.gb.players[0], {'action': "bid", 'dealer': False})
+
+
+    def handle_bid(self, player: str, bid: int):
+        self.send_all({'action': "broadcast_bid", 'player': player, 'bid': bid})
+        self.gb.bid(player, bid)
+        sleep(1)
+        if (len(self.gb.bids) == 4):
+            self.next_to_play_idx = 0 # start to the left of the dealer
+            self.send_one(self.gb.players[0], {'action': "play_card"})
+        elif (len(self.gb.bids) == 3):
+            self.send_one(self.gb.players[3], {'action': "bid", 'dealer': True})
+        else:
+            self.send_one(self.gb.players[len(self.gb.bids)], {'action': "bid", 'dealer': False})
+
+
+    def handle_play_card(self, player: str, card: list, lead = False):
+        self.send_all({'action': "broadcast_played_card", 'player': player, 'card': card})
+        rank, suit = card
+        print("card", card, "rank", rank, 'suit', suit)
+        self.gb.play_card(player, Card(rank, suit), lead = True if len(self.gb.in_play) == 0 else False)
+        if (len(self.gb.in_play) != 4):
+            self.next_to_play_idx = (self.next_to_play_idx + 1) % 4
+            self.send_one(self.gb.players[self.next_to_play_idx], {'action': "play_card"})
+        else:
+            self.finish_trick()
+
+
+    def finish_trick(self):
+        winner = self.gb.finish_trick()
+        self.send_all({'action': "broadcast_trick_winner", 'winner': player})
+        if (len(self.gb.hands[winner]) == 0):
+            for player in self.gb.hands:
+                assert(self.gb.hands[player] == [])
+            self.finish_hand()
+        else:
+            self.next_to_play_idx = self.gb.players.index(winner) # start with the prev winner
+            self.send_one(winner, {'action': "play_card"})
+
+
+    def finish_hand(self):
+        self.send_all({'action': "broadcast_hand_done"})
+        self.gb.collect_cards()
+        self.hand_num += 1
+        if (self.hand_num > 13):
+            self.end_game()
+        else:
+            self.start_hand()
+
+
+    def end_game(self):
+        print("Game Complete!")
+        exit()
+
 
 # get command line argument of server, port
 if len(sys.argv) != 2:
@@ -73,5 +160,5 @@ if len(sys.argv) != 2:
     print("e.g.", sys.argv[0], "localhost:31425")
 else:
     host, port = sys.argv[1].split(":")
-    s = ChatServer(localaddr=(host, int(port)))
+    s = OHServer(localaddr=(host, int(port)))
     s.Launch()

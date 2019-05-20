@@ -4,10 +4,12 @@ from random import shuffle
 class GameBoard:
 
     def __init__(self, players = ["Isaac", "Alex", "Ben", "Owen"]):
+        shuffle(players) # decides dealer
         self.deck = [Card(rank, suit) for suit in Card.suit_ascii for rank in Card.rank_values]
-        self.players = shuffle(players) # decides dealer
-        self.in_play = {player:None for player in self.players}
+        self.players = players
+        self.in_play = dict()
         self.hands = {player:[] for player in self.players}
+        self.bids = dict()
         self.cards_taken = {player:[] for player in self.players}
         self.trump_suit = None
         self.led_suit = None
@@ -16,26 +18,29 @@ class GameBoard:
     # just reinitializes everything
     def collect_cards(self):
         self.deck = [Card(rank, suit) for suit in Card.suit_ascii for rank in Card.rank_values]
-        self.in_play = {player:None for player in self.players}
+        self.in_play = {}
         self.hands = {player:[] for player in self.players}
+        self.bids = dict()
         self.cards_taken = {player:[] for player in self.players}
-
-    # shuffles the deck
-    def shuffle(self):
-        # we can only shuffle a full deck
-        assert(len(self.deck) == 52)
-        shuffle(self.deck)
+        self.trump_suit = None
+        self.led_suit = None
 
     # deals the specified hand
     def deal_hand(self, hand_num: int):
         print("Dealing hand...", end = "")
         # can only deal from a full deck
         assert(len(self.deck) == 52)
+        shuffle(self.deck)
         for player in self.players:
             for _ in range(hand_num):
                 self.hands[player].append(self.deck.pop())
         self.trump_suit = self.deck[0].suit
         print("trump suit is", self.trump_suit)
+
+    def bid(self, player: str, bid: int):
+        print("Player", player, "bids", bid)
+        assert(player not in self.bids)
+        self.bids[player] = bid
 
     # put a card from a specifed player into play
     def play_card(self, player: str, card: Card, lead = False):
@@ -43,7 +48,7 @@ class GameBoard:
         # can only play a card if it's in your hand
         assert(card in self.hands[player])
         # player must not have already played a card
-        assert(self.in_play[player] is None)
+        assert(player not in self.in_play)
         if (lead):
             assert(self.led_suit is None)
             self.led_suit = card.suit
@@ -54,7 +59,7 @@ class GameBoard:
     # calculate the winner of the trick,
     # update trick piles, and
     # clear in_play
-    def finish_trick(self):
+    def finish_trick(self) -> str:
         print("Finishing trick")
         # everyone must have played a card
         for player in self.in_play:
@@ -66,13 +71,20 @@ class GameBoard:
         # move cards in play to the winner's pile
         self.cards_taken[winner].extend(self.in_play.values())
         # clear the cards in play
-        self.in_play = {player: None for player in self.players}
+        self.in_play = {}
         self.led_suit = None
+        return winner
+
+    def finish_hand(self):
+        print("Finishing hand")
+        for player in self.hands:
+            assert(self.hands[player] == [])
+
+
 
 # this logic will eventually go in server.py
 if __name__ == "__main__":
     g = GameBoard()
-    g.shuffle()
     g.deal_hand(2)
     print("hands now are ", g.hands)
     for _ in range(2):
@@ -86,4 +98,5 @@ if __name__ == "__main__":
         g.finish_trick()
         print("in play now is ", g.in_play)
         print("cards taken now are", g.cards_taken)
+    g.finish_hand()
 
