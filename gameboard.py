@@ -5,7 +5,6 @@ class GameBoard:
 
     def __init__(self, players = ["Isaac", "Alex", "Ben", "Owen"]):
         self.deck = [Card(rank, suit) for suit in Card.suit_ascii for rank in Card.rank_values]
-        # self.players = [str(i) for i in range(num_players)]
         self.players = players
         self.in_play = {player:None for player in self.players}
         self.hands = {player:[] for player in self.players}
@@ -46,6 +45,7 @@ class GameBoard:
         # player must not have already played a card
         assert(self.in_play[player] is None)
         if (lead):
+            assert(self.led_suit is None)
             self.led_suit = card.suit
 
         self.in_play[player] = card
@@ -55,6 +55,7 @@ class GameBoard:
     # update trick piles, and
     # clear in_play
     def finish_trick(self):
+        print("Finishing trick")
         # everyone must have played a card
         for player in self.in_play:
             assert(self.in_play[player] is not None)
@@ -62,6 +63,11 @@ class GameBoard:
         # calculate winner
         winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, self.trump_suit))
         print("Winner is", winner)
+        # move cards in play to the winner's pile
+        self.cards_taken[winner].extend(self.in_play.values())
+        # clear the cards in play
+        self.in_play = {player: None for player in self.players}
+        self.led_suit = None
 
 
 if __name__ == "__main__":
@@ -69,11 +75,15 @@ if __name__ == "__main__":
     g.shuffle()
     g.deal_hand(2)
     print("hands now are ", g.hands)
-    print("playing trick")
-    g.play_card(g.players[0], g.hands[g.players[0]][0], lead = True)
-    g.play_card(g.players[1], g.hands[g.players[1]][0])
-    g.play_card(g.players[2], g.hands[g.players[2]][0])
-    g.play_card(g.players[3], g.hands[g.players[3]][0])
-    print("hands now are ", g.hands)
-    print("in play now is ", g.in_play)
-    g.finish_trick()
+    for _ in range(2):
+        print("playing trick")
+        g.play_card(g.players[0], g.hands[g.players[0]][0], lead = True)
+        g.play_card(g.players[1], g.hands[g.players[1]][0])
+        g.play_card(g.players[2], g.hands[g.players[2]][0])
+        g.play_card(g.players[3], g.hands[g.players[3]][0])
+        print("hands now are ", g.hands)
+        print("in play now is ", g.in_play)
+        g.finish_trick()
+        print("in play now is ", g.in_play)
+        print("cards taken now are", g.cards_taken)
+
