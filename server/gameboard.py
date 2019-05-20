@@ -5,7 +5,7 @@ class GameBoard:
 
     def __init__(self, players = ["Isaac", "Alex", "Ben", "Owen"]):
         self.deck = [Card(rank, suit) for suit in Card.suit_ascii for rank in Card.rank_values]
-        self.players = players
+        self.players = shuffle(players) # decides dealer
         self.in_play = {player:None for player in self.players}
         self.hands = {player:[] for player in self.players}
         self.cards_taken = {player:[] for player in self.players}
