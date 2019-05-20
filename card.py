@@ -121,7 +121,7 @@ class Card:
 └─────────┘\
 ")
 
-
+# testing card
 if __name__ == "__main__":
     c = Card("K", "clubs")
     d = Card("10", "diamonds")
