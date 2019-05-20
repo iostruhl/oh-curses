@@ -69,7 +69,7 @@ class GameBoard:
         self.in_play = {player: None for player in self.players}
         self.led_suit = None
 
-
+# this logic will eventually go in app.py
 if __name__ == "__main__":
     g = GameBoard()
     g.shuffle()
