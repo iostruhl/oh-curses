@@ -34,7 +34,8 @@ class GameBoard:
         for player in self.players:
             for _ in range(hand_num):
                 self.hands[player].append(self.deck.pop())
-        self.trump_suit = self.deck[0].suit
+        if (hand_num < 13):
+            self.trump_suit = self.deck[0].suit
         print("trump suit is", self.trump_suit)
 
     def bid(self, player: str, bid: int):

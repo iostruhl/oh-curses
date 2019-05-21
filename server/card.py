@@ -96,7 +96,7 @@ class Card:
             return (
                 "\
 ┌─────────┐\n\
-│{}       │\n\
+│{}{}     │\n\
 │         │\n\
 │         │\n\
 │    {}   │\n\
@@ -106,6 +106,7 @@ class Card:
 └─────────┘\
                 ".format(
                     format(self.rank, ' <2'),
+                    format(self.suit_ascii[self.suit], ' ^2'),
                     format(self.suit_ascii[self.suit], ' ^2'),
                     format(self.rank, ' >2'),
                     )
