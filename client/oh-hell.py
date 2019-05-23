@@ -33,21 +33,35 @@ class Client(ConnectionListener):
         print("Hand is", data['hand'])
 
     def Network_bid(self, data):
-        bid = int(input("Enter your bid: "))
+        bid = -1
+        while 1:
+            try:
+                bid = int(input("Enter your bid: "))
+                break
+            except:
+                print("Error, please try again")
+                pass
         connection.Send({'action': "bid", 'bid': bid})
 
     def Network_broadcast_bid(self, data):
         print(data['player'], "has bid", data['bid'])
 
     def Network_play_card(self, data):
-        card = input("Enter card to play: ").split(',')
+        while 1:
+            try:
+                card = input("Enter card to play: ").split(',')
+                Card(card[0], card[1])
+                break
+            except:
+                print("Error, please try again")
+                pass
         connection.Send({'action': 'play', 'card': card})
 
     def Network_broadcast_played_card(self, data):
         print(data['player'], "played card", data['card'])
 
     def Network_broadcast_trick_winner(self, data):
-        print(data['player', "won the trick"])
+        print(data['player'], "won the trick")
 
     def Network_broadcast_hand_done(self, data):
         print("Hand is over.")

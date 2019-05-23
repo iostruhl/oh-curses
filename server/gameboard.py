@@ -31,6 +31,7 @@ class GameBoard:
         # can only deal from a full deck
         assert(len(self.deck) == 52)
         shuffle(self.deck)
+
         for player in self.players:
             for _ in range(hand_num):
                 self.hands[player].append(self.deck.pop())
@@ -38,6 +39,7 @@ class GameBoard:
             self.trump_suit = self.deck[0].suit
         print("trump suit is", self.trump_suit)
 
+    # assigns a bid to a player
     def bid(self, player: str, bid: int):
         print("Player", player, "bids", bid)
         assert(player not in self.bids)
@@ -45,11 +47,11 @@ class GameBoard:
 
     # put a card from a specifed player into play
     def play_card(self, player: str, card: Card, lead = False):
-        print("Playing card", card, "from player", player, "(trick lead)" if lead else "")
         # can only play a card if it's in your hand
         assert(card in self.hands[player])
         # player must not have already played a card
         assert(player not in self.in_play)
+        print("Playing card", card, "from player", player, "(trick lead)" if lead else "")
         if (lead):
             assert(self.led_suit is None)
             self.led_suit = card.suit

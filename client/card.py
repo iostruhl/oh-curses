@@ -56,37 +56,11 @@ class Card:
     def to_array(self) -> list:
         return [self.rank, self.suit]
 
-    # # sorry, this was a good idea, but I had no idea how to pass in globals
-    # def __lt__(self, other):
-    #     assert(Globals.trump_suit and Globals.led_suit)
-    #     if self.__class__ == other.__class__:
-    #         if (self.suit == Globals.trump_suit):
-    #             if (other.suit == Globals.trump_suit):
-    #                 return self.value < other.value
-    #             else:
-    #                 return False
-    #         elif (other.suit == Globals.trump_suit):
-    #             return True
-    #         elif (self.suit == Globals.led_suit):
-    #             if (other.suit == Globals.led_suit):
-    #                 return self.value < other.value
-    #             else:
-    #                 return False
-    #         elif (other.suit == Globals.led_suit):
-    #             return True
-    #         else:
-    #             return False
-    #     return NotImplemented
-
-    # def __eq__(self, other):
-    #     assert(Globals.trump_suit and Globals.led_suit)
-    #     if self.__class__ == other.__class__:
-    #         if (self.suit != Globals.trump_suit and self.suit != Globals.led_suit and
-    #             other.suit != Globals.trump_suit and other.suit != Globals.trump_suit):
-    #             return True
-    #         else:
-    #             return False
-    #     return NotImplemented
+    # ABSOLUTELY NEED THIS FOR LIST MEMBERSHIP
+    def __eq__(self, other):
+        if isinstance(other, Card):
+            return self.rank == other.rank and self.suit == other.suit
+        return NotImplemented
 
     def __repr__(self):
         return "{:s}{:s}".format(self.rank, self.suit_ascii[self.suit])
@@ -96,7 +70,7 @@ class Card:
             return (
                 "\
 ┌─────────┐\n\
-│{}       │\n\
+│{}{}     │\n\
 │         │\n\
 │         │\n\
 │    {}   │\n\
@@ -106,6 +80,7 @@ class Card:
 └─────────┘\
                 ".format(
                     format(self.rank, ' <2'),
+                    format(self.suit_ascii[self.suit], ' ^2'),
                     format(self.suit_ascii[self.suit], ' ^2'),
                     format(self.rank, ' >2'),
                     )
