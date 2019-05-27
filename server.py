@@ -89,7 +89,10 @@ class OHServer(Server):
         self.name_to_user = {u.name:u for u in self.users}
         self.scores = {u.name:0 for u in self.users}
 
-        self.send_all({'action': "start", 'players': self.gb.players})
+        self.send_all({
+            'action': "start", 
+            'players': self.gb.players
+            })
 
         self.start_hand()
 
@@ -98,9 +101,16 @@ class OHServer(Server):
         self.gb.deal_hand(self.hand_num)
         for player in self.gb.players:
             print("Sending to", player)
-            self.send_one(player, {'action': "hand_dealt", 'trump_card': self.gb.trump_card.to_array(), 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]})
-            print("Sorted hand is", sorted(self.gb.hands[player]))
-        self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
+            self.send_one(player, {
+                'action': "hand_dealt", 
+                'trump_card': self.gb.trump_card.to_array(), 
+                'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
+                })
+        self.send_one(self.gb.players[(self.hand_num - 1) % 4], {
+            'action': "bid", 
+            'hand': self.hand_num, 
+            'dealer': False
+            })
 
 
     def handle_bid(self, player: str, bid: int):
@@ -112,17 +122,19 @@ class OHServer(Server):
             self.send_all({'action': "start_hand"})
             self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "play_card"})
         else:
-            self.send_one(self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], 
-                {
+            self.send_one(self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], {
                 'action': "bid", 
                 'hand': self.hand_num, 
                 'dealer': True if len(self.gb.bids) == 3 else False
-                }
-            )
+                })
 
 
     def handle_play_card(self, player: str, card: list, lead = False):
-        self.send_all({'action': "broadcast_played_card", 'player': player, 'card': card})
+        self.send_all({
+            'action': "broadcast_played_card", 
+            'player': player, 
+            'card': card
+            })
         self.gb.play_card(player, Card(card[0], card[1]), lead = True if len(self.gb.in_play) == 0 else False)
         if (len(self.gb.in_play) != 4):
             self.next_to_play_idx = (self.next_to_play_idx + 1) % 4
@@ -133,7 +145,9 @@ class OHServer(Server):
 
     def finish_trick(self):
         winner = self.gb.finish_trick()
-        self.send_all({'action': "broadcast_trick_winner", 'player': winner})
+        self.send_all({
+            'action': "broadcast_trick_winner", 
+            'player': winner})
         if (len(self.gb.hands[winner]) == 0):
             for player in self.gb.hands:
                 assert(self.gb.hands[player] == [])
@@ -155,14 +169,16 @@ class OHServer(Server):
 
     def end_game(self):
         print("Game Complete!")
+        print("Vars at end:", vars(self))
         exit()
 
-
-# get command line argument of server, port
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "host:port")
-    print("e.g.", sys.argv[0], "localhost:31425")
-else:
-    host, port = sys.argv[1].split(":")
-    s = OHServer(localaddr=(host, int(port)))
-    s.Launch()
+# Run the server
+if __name__ == "__main__":
+    # get command line argument of server, port
+    if len(sys.argv) != 2:
+        print("Usage:", sys.argv[0], "host:port")
+        print("e.g.", sys.argv[0], "localhost:31425")
+    else:
+        host, port = sys.argv[1].split(":")
+        s = OHServer(localaddr=(host, int(port)))
+        s.Launch()

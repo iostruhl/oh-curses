@@ -79,12 +79,14 @@ class Client(ConnectionListener):
         print('Server disconnected')
         exit()
 
-if len(sys.argv) != 3:
-    print("Usage:", sys.argv[0], "host:port name")
-    print("e.g.", sys.argv[0], "localhost:8080 Isaac")
-else:
-    host, port = sys.argv[1].split(":")
-    c = Client(host, int(port), sys.argv[2])
-    while 1:
-        c.Loop()
-        sleep(0.001)
+# Run the client
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage:", sys.argv[0], "host:port name")
+        print("e.g.", sys.argv[0], "localhost:8080 Isaac")
+    else:
+        host, port = sys.argv[1].split(":")
+        c = Client(host, int(port), sys.argv[2])
+        while 1:
+            c.Loop()
+            sleep(0.001)
