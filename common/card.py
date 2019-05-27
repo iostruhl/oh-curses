@@ -30,11 +30,22 @@ class Card:
     }
 
     def __init__(self, rank: str = None, suit: str = None):
-        assert(rank in self.rank_values)
+        # Commented out these assertions so ClientBoard can have empty
+        # dummy cards to fill opponents' hands with
+        # assert(rank in self.rank_values)
         self.rank = rank
-        self.value = self.rank_values[rank]
-        assert(suit in self.suit_ascii)
-        self.suit = suit
+
+        if rank:
+            self.value = self.rank_values[rank]
+        else:
+            self.value = None
+
+        # assert(suit in self.suit_ascii)
+        if suit:
+            self.suit = suit
+        else:
+            self.suit = None
+
         self.visible = False
 
     def show(self):

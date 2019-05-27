@@ -88,15 +88,21 @@ class ClientBoard:
     def __init__(self, players, active):
         self.players = players
         self.active = active
+        self.active_position = players.index(active)
         self.hands = {player:[] for player in players}
         self.bids = {player:[] for player in players}
         self.won = {player:[] for player in players}
         self.in_play = {player:[] for player in players}
         self.trump_suit = None
 
-    def get_hand(self, hand):
-        self.hands[active] = [Card(card[0], card[1]) for card in hand]
-
+    def get_hand(self, dealt_hand):
+        for player in self.hands.keys():
+            if player == self.active:
+                self.hands[player] = [Card(card[0], card[1]) for card in dealt_hand]
+                for card in self.hands[player]:
+                    card.show()
+            else:
+                self.hands[player] = [Card() for card in dealt_hand]
 
 
 # this logic will eventually go in server.py
