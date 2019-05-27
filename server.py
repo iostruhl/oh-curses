@@ -39,7 +39,7 @@ class OHServer(Server):
         self.users = []
         self.name_to_user = dict()
         self.runnable = True
-        self.hand_num = 1
+        self.hand_num = 5
         self.scores = dict()
         self.next_to_play_idx = 0
         self.gb = None
@@ -89,7 +89,7 @@ class OHServer(Server):
         self.name_to_user = {u.name:u for u in self.users}
         self.scores = {u.name:0 for u in self.users}
 
-        self.send_all({'action': "start", 'players': [u.name for u in self.users]})
+        self.send_all({'action': "start", 'players': self.gb.players})
 
         self.start_hand()
 
@@ -105,7 +105,7 @@ class OHServer(Server):
     def handle_bid(self, player: str, bid: int):
         self.send_all({'action': "broadcast_bid", 'player': player, 'bid': bid})
         self.gb.bid(player, bid)
-        sleep(1)
+        # sleep(1)
         if (len(self.gb.bids) == 4):
             self.next_to_play_idx = 0 # start to the left of the dealer
             self.send_one(self.gb.players[0], {'action': "play_card"})

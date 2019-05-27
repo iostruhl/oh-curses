@@ -90,9 +90,9 @@ class ClientBoard:
         self.active = active
         self.active_position = players.index(active)
         self.hands = {player:[] for player in players}
-        self.bids = {player:[] for player in players}
         self.won = {player:[] for player in players}
         self.in_play = {player:[] for player in players}
+        self.bids = dict()
         self.trump_suit = None
 
     def get_hand(self, dealt_hand):

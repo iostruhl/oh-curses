@@ -43,7 +43,8 @@ class Client(ConnectionListener):
         connection.Send({'action': "bid", 'bid': bid})
 
     def Network_broadcast_bid(self, data):
-        print(data['player'], "has bid", data['bid'])
+        self.cb.bids[data['player']] = data['bid']
+        self.gb.receive_bid(data['player'], data['bid'])
 
     def Network_play_card(self, data):
         while 1:

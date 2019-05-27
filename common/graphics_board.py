@@ -76,6 +76,34 @@ class GraphicsBoard:
                 self.hand_panels[3] = [panel.new_panel(self.hand_windows[3][j])
                                        for j in range(hand_size)]
             self.draw_hand(self.cb.players[i])
+        self.draw_new_info_window()
+
+    def draw_new_info_window(self):
+        for i in range(len(self.cb.players)):
+            if i == self.cb.active_position:
+                self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (2*PADDING)+(2*C_HEIGHT)+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
+                self.info_windows[0].erase()
+                self.info_windows[0].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[0].box()
+                self.info_windows[0].refresh()
+            elif i == (self.cb.active_position + 1) % 4:
+                self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH)
+                self.info_windows[1].erase()
+                self.info_windows[1].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[1].box()
+                self.info_windows[1].refresh()
+            elif i == (self.cb.active_position + 2) % 4:
+                self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING, (2*PADDING)+C_WIDTH+(6*H_SPACING))
+                self.info_windows[2].erase()
+                self.info_windows[2].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[2].box()
+                self.info_windows[2].refresh()
+            elif i == (self.cb.active_position + 3) % 4:
+                self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(12*H_SPACING))
+                self.info_windows[3].erase()
+                self.info_windows[3].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[3].box()
+                self.info_windows[3].refresh()
 
     def get_input(self):
         while (True):
@@ -92,20 +120,28 @@ class GraphicsBoard:
                 self.hand_navigate(1)
 
     def bid_navigate(self, n, hand_size, is_dealer):
-        possible_bids = hand_size
-        if is_dealer:
-            possible_bids -= 1
+        possible_bids = hand_size + 1
         self.bid_position = (self.bid_position + n) % possible_bids
+        if is_dealer and ((hand_size - sum(self.cb.bids.values())) == self.bid_position):
+            self.bid_position = (self.bid_position + n) % possible_bids
+
+    def receive_bid(self, player, bid):
+        player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
+        self.info_windows[player_position].addstr(" Bid: %i\n" % bid)
+        self.info_windows[player_position].box()
+        self.info_windows[player_position].refresh()
 
     def draw_bids(self, hand_size, is_dealer):
         self.bid_windows = [curses.newwin(B_HEIGHT, B_WIDTH, (3*PADDING)+(3*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(i*B_WIDTH))
-                            for i in range(hand_size)]
+                            for i in range(hand_size + 1)]
 
         for window in self.bid_windows:
             window.erase()
+            if is_dealer and ((hand_size - sum(self.cb.bids.values())) == self.bid_windows.index(window)):
+                continue
+            window.addstr("\n %i" % self.bid_windows.index(window))
             if self.bid_windows.index(window) == self.bid_position:
                 window.attron(curses.A_REVERSE)
-            window.addstr("\n %i" % self.bid_windows.index(window))
             window.box()
             window.refresh()
 
@@ -114,6 +150,9 @@ class GraphicsBoard:
             self.draw_bids(hand_size, is_dealer)
             key = self.stdscr.getch()
             if key in [curses.KEY_ENTER, ord('\n')]:
+                for window in self.bid_windows:
+                    window.erase()
+                    window.refresh()
                 return self.bid_position
             elif key == curses.KEY_LEFT:
                 self.bid_navigate(-1, hand_size, is_dealer)
@@ -216,7 +255,6 @@ class GraphicsBoard:
                 self.info_windows[2].addstr(" Won: 0\n")
                 self.info_windows[2].box()
                 self.info_windows[2].refresh()
-                continue
             elif i == (self.cb.active_position + 3) % 4:
                 self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(12*H_SPACING))
                 self.info_windows[3].erase()
@@ -225,7 +263,6 @@ class GraphicsBoard:
                 self.info_windows[3].addstr(" Won: 0\n")
                 self.info_windows[3].box()
                 self.info_windows[3].refresh()
-                continue
 
     def init_display(self):
         self.window.erase()
