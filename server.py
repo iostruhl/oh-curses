@@ -108,6 +108,7 @@ class OHServer(Server):
         # sleep(1)
         if (len(self.gb.bids) == 4):
             self.next_to_play_idx = 0 # start to the left of the dealer
+            self.send_all({'action': "start_hand"})
             self.send_one(self.gb.players[0], {'action': "play_card"})
         elif (len(self.gb.bids) == 3):
             self.send_one(self.gb.players[3], {'action': "bid", 'hand': self.hand_num, 'dealer': True})

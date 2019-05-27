@@ -9,7 +9,7 @@ H_SPACING = 5
 C_HEIGHT = 11
 C_WIDTH = 13
 I_HEIGHT = 5
-I_WIDTH = 11
+I_WIDTH = C_HEIGHT
 B_HEIGHT = 3
 B_WIDTH = 4
 
@@ -45,7 +45,7 @@ class GraphicsBoard:
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
         self.hand_position = (self.hand_position + n) % len(self.cb.hands[self.cb.active])
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
-        if (n < 0 and self.hand_position == 12):
+        if (n < 0 and self.hand_position == (len(self.cb.hands[self.cb.active]) - 1)):
             self.redraw_hand(0)
         else:
             self.redraw_hand(self.hand_position - 1)
@@ -53,30 +53,47 @@ class GraphicsBoard:
     def draw_new_hand(self, hand_size: int):
         for i in range(len(self.cb.players)):
             if i == self.cb.active_position:
-                self.hand_windows[0] = [curses.newwin(11, 13, (4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(j*H_SPACING))
+                self.hand_windows[0] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(j*H_SPACING))
                                         for j in range(hand_size)]
                 self.hand_panels[0] = [panel.new_panel(self.hand_windows[0][j])
                                        for j in range(hand_size)]
-
-                # Initially select first card
-                # self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
             elif i == (self.cb.active_position + 1) % 4:
-                self.hand_windows[1] = [curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(j*V_SPACING), PADDING)
+                self.hand_windows[1] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(j*V_SPACING), PADDING)
                                         for j in range(hand_size)]
                 self.hand_panels[1] = [panel.new_panel(self.hand_windows[1][j])
                                        for j in range(hand_size)]
             elif i == (self.cb.active_position + 2) % 4:
-                self.hand_windows[2] = [curses.newwin(11, 13, PADDING, (2*PADDING)+C_WIDTH+(j*H_SPACING))
+                self.hand_windows[2] = [curses.newwin(C_HEIGHT, C_WIDTH, PADDING, (2*PADDING)+C_WIDTH+(j*H_SPACING))
                                         for j in range(hand_size)]
                 self.hand_panels[2] = [panel.new_panel(self.hand_windows[2][j])
                                        for j in range(hand_size)]
             elif i == (self.cb.active_position + 3) % 4:
-                self.hand_windows[3] = [curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(j*V_SPACING), (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING))
+                self.hand_windows[3] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(j*V_SPACING), (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING))
                                         for j in range(hand_size)]
                 self.hand_panels[3] = [panel.new_panel(self.hand_windows[3][j])
                                        for j in range(hand_size)]
             self.draw_hand(self.cb.players[i])
         self.draw_new_info_window()
+
+    def collapse_hand(self, player_position):
+        for window in self.hand_windows[0]:
+            window.erase()
+            window.refresh()
+        hand_size = len(self.cb.hands[self.cb.players[player_position]])
+        self.hand_windows[0] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(i*H_SPACING))
+                                for i in range(hand_size)]
+        self.hand_panels[0] = [panel.new_panel(self.hand_windows[0][i])
+                               for i in range(hand_size)]
+        self.draw_hand(self.cb.players[player_position])
+
+    def refresh_info_window(self, player):
+        player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
+        self.info_windows[player_position].erase()
+        self.info_windows[player_position].addstr('\n '+player+'\n')
+        self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
+        self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
+        self.info_windows[player_position].box()
+        self.info_windows[player_position].refresh()
 
     def draw_new_info_window(self):
         for i in range(len(self.cb.players)):
@@ -105,19 +122,39 @@ class GraphicsBoard:
                 self.info_windows[3].box()
                 self.info_windows[3].refresh()
 
-    def get_input(self):
-        while (True):
-            key = self.window.getch()
-
+    def get_card(self):
+        self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+        self.redraw_hand(0)
+        while True:
+            key = self.stdscr.getch()
             if key in [curses.KEY_ENTER, ord('\n')]:
-                # TODO: play card
-                exit()
-
-            elif key == curses.KEY_LEFT or key == curses.KEY_UP:
+                played_card = self.cb.hands[self.cb.active].pop(self.hand_position)
+                self.collapse_hand(self.cb.active_position)
+                return played_card
+            elif key == curses.KEY_LEFT:
                 self.hand_navigate(-1)
-
-            elif key == curses.KEY_RIGHT or key == curses.KEY_DOWN:
+            elif key == curses.KEY_RIGHT:
                 self.hand_navigate(1)
+
+    def play_card(self, player, card):
+        player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
+        if player_position == 0:
+            self.played_windows[0] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
+        elif player_position == 1:
+            self.played_windows[1] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(3*H_SPACING))
+        elif player_position == 2:
+            self.played_windows[2] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT, (2*PADDING)+C_WIDTH+(6*H_SPACING))
+        elif player_position == 3:
+            self.played_windows[3] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(9*H_SPACING))
+        self.played_windows[player_position].erase()
+        self.played_windows[player_position].attron(curses.color_pair(card.color()))
+        self.played_windows[player_position].addstr(card.ascii_rep())
+        self.played_windows[player_position].refresh()
+        self.refresh_info_window(self.cb.active)
+
+    def start_hand(self):
+        for player in self.cb.players:
+            self.refresh_info_window(player)
 
     def bid_navigate(self, n, hand_size, is_dealer):
         possible_bids = hand_size + 1
@@ -185,94 +222,11 @@ class GraphicsBoard:
         for card in range(position, len(self.cb.hands[self.cb.active])):
             self.draw_hand_card(self.cb.active, card)
 
-    def test_draw_play(self):
-        for i in range(len(self.cb.players)):
-            if i == self.cb.active_position:
-                self.played_windows[0] = curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
-                self.played_windows[0].erase()
-                self.played_windows[0].attron(
-                    curses.color_pair(self.cb.hands[self.cb.active][0].color()))
-                self.played_windows[0].addstr(
-                    self.cb.hands[self.cb.active][0].ascii_rep())
-                self.played_windows[0].refresh()
-            elif i == (self.cb.active_position + 1) % 4:
-                self.played_windows[1] = curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(3*H_SPACING))
-                self.played_windows[1].erase()
-                self.played_windows[1].attron(
-                    curses.color_pair(self.cb.hands[self.cb.active][1].color()))
-                self.played_windows[1].addstr(
-                    self.cb.hands[self.cb.active][1].ascii_rep())
-                self.played_windows[1].refresh()
-            elif i == (self.cb.active_position + 2) % 4:
-                self.played_windows[2] = curses.newwin(11, 13, (4*PADDING)+C_HEIGHT, (2*PADDING)+C_WIDTH+(6*H_SPACING))
-                self.played_windows[2].erase()
-                self.played_windows[2].attron(
-                    curses.color_pair(self.cb.hands[self.cb.active][2].color()))
-                self.played_windows[2].addstr(
-                    self.cb.hands[self.cb.active][2].ascii_rep())
-                self.played_windows[2].refresh()
-            elif i == (self.cb.active_position + 3) % 4:
-                self.played_windows[3] = curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(9*H_SPACING))
-                self.played_windows[3].erase()
-                self.played_windows[3].attron(
-                    curses.color_pair(self.cb.hands[self.cb.active][3].color()))
-                self.played_windows[3].addstr(
-                    self.cb.hands[self.cb.active][3].ascii_rep())
-                self.played_windows[3].refresh()
-
     def test_draw_trump(self):
-        self.trump_window = curses.newwin(11, 13, PADDING, PADDING)
+        self.trump_window = curses.newwin(C_HEIGHT, C_WIDTH, PADDING, PADDING)
         self.trump_window.erase()
         self.trump_window.attron(
             curses.color_pair(self.cb.hands[self.cb.active][12].color()))
         self.trump_window.addstr(
             self.cb.hands[self.cb.active][12].ascii_rep())
         self.trump_window.refresh()
-
-    def test_draw_info_windows(self):
-        for i in range(len(self.cb.players)):
-            if i == self.cb.active_position:
-                self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (2*PADDING)+(2*C_HEIGHT)+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
-                self.info_windows[0].erase()
-                self.info_windows[0].addstr('\n '+self.cb.players[i]+'\n')
-                self.info_windows[0].addstr(" Bid: 0\n")
-                self.info_windows[0].addstr(" Won: 0\n")
-                self.info_windows[0].box()
-                self.info_windows[0].refresh()
-            elif i == (self.cb.active_position + 1) % 4:
-                self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH)
-                self.info_windows[1].erase()
-                self.info_windows[1].addstr('\n '+self.cb.players[i]+'\n')
-                self.info_windows[1].addstr(" Bid: 0\n")
-                self.info_windows[1].addstr(" Won: 0\n")
-                self.info_windows[1].box()
-                self.info_windows[1].refresh()
-            elif i == (self.cb.active_position + 2) % 4:
-                self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING, (2*PADDING)+C_WIDTH+(6*H_SPACING))
-                self.info_windows[2].erase()
-                self.info_windows[2].addstr('\n '+self.cb.players[i]+'\n')
-                self.info_windows[2].addstr(" Bid: 0\n")
-                self.info_windows[2].addstr(" Won: 0\n")
-                self.info_windows[2].box()
-                self.info_windows[2].refresh()
-            elif i == (self.cb.active_position + 3) % 4:
-                self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(12*H_SPACING))
-                self.info_windows[3].erase()
-                self.info_windows[3].addstr('\n '+self.cb.players[i]+'\n')
-                self.info_windows[3].addstr(" Bid: 0\n")
-                self.info_windows[3].addstr(" Won: 0\n")
-                self.info_windows[3].box()
-                self.info_windows[3].refresh()
-
-    def init_display(self):
-        self.window.erase()
-        self.window.refresh()
-
-        for player in self.cb.players:
-            self.draw_hand(player)
-
-        self.test_draw_play()
-        self.test_draw_trump()
-        self.test_draw_info_windows()
-
-        self.run()
