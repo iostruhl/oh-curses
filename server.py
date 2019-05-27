@@ -98,7 +98,8 @@ class OHServer(Server):
         self.gb.deal_hand(self.hand_num)
         for player in self.gb.players:
             print("Sending to", player)
-            self.send_one(player, {'action': "hand_dealt", 'trump_suit': self.gb.trump_suit, 'hand': [c.to_array() for c in self.gb.hands[player]]})
+            self.send_one(player, {'action': "hand_dealt", 'trump_card': self.gb.trump_card.to_array(), 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]})
+            print("Sorted hand is", sorted(self.gb.hands[player]))
         self.send_one(self.gb.players[0], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
 
 

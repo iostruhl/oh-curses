@@ -73,6 +73,15 @@ class Card:
             return self.rank == other.rank and self.suit == other.suit
         return NotImplemented
 
+    # Needed for hand sorting (i.e. organization)
+    def __lt__(self, other):
+        if isinstance(other, Card):
+            if Card.colors[self.suit] == Card.colors[other.suit]:
+                return self.value > other.value
+            else:
+                return Card.colors[self.suit] > Card.colors[other.suit]
+        return NotImplemented
+
     def __repr__(self):
         return "{:s}{:s}".format(self.rank, self.suit_ascii[self.suit])
 
