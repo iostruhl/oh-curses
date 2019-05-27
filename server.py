@@ -1,7 +1,7 @@
 import sys
-import gameboard
+from common.boardstate import GameBoard
 from time import sleep, localtime
-from card import Card
+from common.card import Card
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
 
@@ -9,14 +9,14 @@ class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
         self.name = "ANON"
         Channel.__init__(self, *args, **kwargs)
-    
+
     def Close(self):
         self._server.remove_player(self)
-    
+
     ##################################
     ### Network specific callbacks ###
     ##################################
-    
+
     def Network_name(self, data):
         print("Client", self.name, "sent", data)
         self.name = data['name']
@@ -33,7 +33,7 @@ class ClientChannel(Channel):
 
 class OHServer(Server):
     channelClass = ClientChannel
-    
+
     def __init__(self, *args, **kwargs):
         Server.__init__(self, *args, **kwargs)
         self.users = []
@@ -44,14 +44,14 @@ class OHServer(Server):
         self.next_to_play_idx = 0
         self.gb = None
         print("Server launched")
-    
+
     def Connected(self, channel, addr):
         self.add_user(channel)
-    
+
     def add_user(self, user):
         print("New Player" + str(user.addr))
         self.users.append(user)
-    
+
     def remove_player(self, player):
         print("Remove Player" + str(player.addr))
         self.users.remove(player)
@@ -61,14 +61,14 @@ class OHServer(Server):
 
     def send_pause(self):
         self.send_all({'action': "pause"})
-    
+
     def send_users(self):
         self.send_all({'action': "users", 'users': [u.name for u in self.users]})
         if (len(self.users) == 4 and (u.name != "ANON" for u in self.users)):
             print(len(self.users), [u.name for u in self.users])
             print("STARTING!!!")
             self.start_game()
-    
+
     def send_all(self, data):
         print("Server: sending to ALL :", data)
         [u.Send(data) for u in self.users]
@@ -76,7 +76,7 @@ class OHServer(Server):
     def send_one(self, name, data):
         print("Server: sending to", name, ":", data)
         self.name_to_user[name].Send(data)
-    
+
     def Launch(self):
         while True:
             self.Pump()
@@ -85,9 +85,11 @@ class OHServer(Server):
     # --- Game Logic ---
     def start_game(self):
         assert(self.runnable)
-        self.gb = gameboard.GameBoard(players = [u.name for u in self.users])
+        self.gb = GameBoard(players = [u.name for u in self.users])
         self.name_to_user = {u.name:u for u in self.users}
         self.scores = {u.name:0 for u in self.users}
+
+        self.send_all({'action': "start", 'players': [u.name for u in self.users]})
 
         self.start_hand()
 

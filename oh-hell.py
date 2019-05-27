@@ -1,7 +1,9 @@
 import sys
 from time import sleep
 from sys import stdin, exit
-from card import Card
+from common.card import Card
+from common.boardstate import ClientBoard
+import common.graphics_board as graphics_board
 
 from PodSixNet.Connection import connection, ConnectionListener
 
@@ -10,27 +12,33 @@ class Client(ConnectionListener):
         self.Connect((host, port))
         print("Oh Hell client started")
         print("Ctrl-C to exit")
+        self.name = name
         # get a nickname from the user before starting
         connection.Send({"action": "name", "name": name})
-    
+
     def Loop(self):
         connection.Pump()
         self.Pump()
-    
+
     #######################################
     ### Network event/message callbacks ###
     #######################################
-    
+
     def Network_users(self, data):
         print("*** users: " + ", ".join([p for p in data['users']]))
-    
+
     def Network_pause(self, data):
         print("*** USER HAS DISCONNECTED, BAD BAD BAD\nFAILS SILENTLY FOR NOW, WILL BLOW UP LATER")
+
+    def Network_start(self, data):
+        self.cb = ClientBoard(data['players'], self.name)
+        self.gb = graphics_board.GraphicsBoard(self.cb)
 
     def Network_hand_dealt(self, data):
         print("HAND DEALT, data is", data)
         print("Hand has been dealt, trump suit is", data['trump_suit'])
         print("Hand is", data['hand'])
+        self.cb.get_hand(data['hand'])
 
     def Network_bid(self, data):
         bid = -1
@@ -66,16 +74,16 @@ class Client(ConnectionListener):
     def Network_broadcast_hand_done(self, data):
         print("Hand is over.")
 
-    
+
     # built in stuff
 
     def Network_connected(self, data):
         print("You are now connected to the server")
-    
+
     def Network_error(self, data):
         print('error:', data['error'][1])
         connection.Close()
-    
+
     def Network_disconnected(self, data):
         print('Server disconnected')
         exit()

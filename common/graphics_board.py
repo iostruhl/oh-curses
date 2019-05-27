@@ -1,10 +1,6 @@
 import curses
 from curses import panel
-
-# this jankiness shouldn't be needed later
-import sys
-sys.path.append('../server')
-from gameboard import GameBoard
+from .boardstate import ClientBoard
 
 PADDING = 1
 V_SPACING = 1
@@ -14,22 +10,30 @@ C_WIDTH = 13
 I_HEIGHT = 5
 I_WIDTH = 11
 
-class Board:
+class GraphicsBoard:
 
-    def __init__(self, stdscreen, g: GameBoard, active: str):
-        self.window = stdscreen.subwin(0,0)
+    def __init__(self, cb: ClientBoard):
+        # Set up curses
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        self.stdscr.keypad(True)
+
+        self.window = self.stdscr.subwin(0,0)
         self.window.keypad(True)
+
         # Only support drawing 4-player games for now
-        assert(len(g.players) == 4)
-        self.g = g
-        self.active = active
-        self.active_position = g.players.index(active)
-        self.hand_position = 0
-        self.hand_windows = [[] for player in g.players]
-        self.hand_panels = [[] for player in g.players]
-        self.played_windows = [None for player in g.players]
-        self.trump_window = None
-        self.info_windows = [None for player in g.players]
+        # self.g = cb
+        # self.active = cb.active
+        # self.active_position = cb.players.index(active)
+        # self.hand_position = 0
+        # self.hand_windows = [[] for player in cb.players]
+        # self.hand_panels = [[] for player in cb.players]
+        # self.played_windows = [None for player in cb.players]
+        # self.trump_window = None
+        # self.info_windows = [None for player in cb.players]
+        self.window.addstr("SETUP SUCCESSFUL\n")
+        self.window.refresh()
 
     def hand_navigate(self, n):
         hand_len = len(self.g.hands[self.active])
@@ -205,20 +209,3 @@ class Board:
         self.test_draw_info_windows()
 
         self.run()
-
-
-class App:
-    def __init__(self, stdscreen):
-        self.screen = stdscreen
-        curses.curs_set(0)
-        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
-        g = GameBoard()
-        board = Board(self.screen, g, "Alex")
-        g.deal_hand(13)
-        board.draw_new_hand(13)
-        board.init_display()
-
-if __name__ == "__main__":
-    curses.wrapper(App)

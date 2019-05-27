@@ -1,4 +1,4 @@
-from card import Card
+from .card import Card
 from random import shuffle
 
 class GameBoard:
@@ -82,6 +82,20 @@ class GameBoard:
         print("Finishing hand")
         for player in self.hands:
             assert(self.hands[player] == [])
+
+class ClientBoard:
+
+    def __init__(self, players, active):
+        self.players = players
+        self.active = active
+        self.hands = {player:[] for player in players}
+        self.bids = {player:[] for player in players}
+        self.won = {player:[] for player in players}
+        self.in_play = {player:[] for player in players}
+        self.trump_suit = None
+
+    def get_hand(self, hand):
+        self.hands[active] = [Card(card[0], card[1]) for card in hand]
 
 
 
