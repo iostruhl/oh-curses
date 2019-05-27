@@ -100,7 +100,7 @@ class OHServer(Server):
             print("Sending to", player)
             self.send_one(player, {'action': "hand_dealt", 'trump_card': self.gb.trump_card.to_array(), 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]})
             print("Sorted hand is", sorted(self.gb.hands[player]))
-        self.send_one(self.gb.players[0], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
+        self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
 
 
     def handle_bid(self, player: str, bid: int):
@@ -108,13 +108,17 @@ class OHServer(Server):
         self.gb.bid(player, bid)
         # sleep(1)
         if (len(self.gb.bids) == 4):
-            self.next_to_play_idx = 0 # start to the left of the dealer
+            self.next_to_play_idx = (self.hand_num - 1) % 4 # set to dealer, incremented by handle_play
             self.send_all({'action': "start_hand"})
-            self.send_one(self.gb.players[0], {'action': "play_card"})
-        elif (len(self.gb.bids) == 3):
-            self.send_one(self.gb.players[3], {'action': "bid", 'hand': self.hand_num, 'dealer': True})
+            self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "play_card"})
         else:
-            self.send_one(self.gb.players[len(self.gb.bids)], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
+            self.send_one(self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], 
+                {
+                'action': "bid", 
+                'hand': self.hand_num, 
+                'dealer': True if len(self.gb.bids) == 3 else False
+                }
+            )
 
 
     def handle_play_card(self, player: str, card: list, lead = False):
