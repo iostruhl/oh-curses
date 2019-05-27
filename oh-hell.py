@@ -32,35 +32,39 @@ class Client(ConnectionListener):
 
     def Network_start(self, data):
         self.cb = ClientBoard(data['players'], self.name)
-        self.gb = graphics_board.GraphicsBoard(self.cb)
+        self.grb = graphics_board.GraphicsBoard(self.cb)
 
     def Network_hand_dealt(self, data):
         self.cb.get_hand(data['hand'])
-        self.gb.draw_new_hand(len(data['hand']))
+        self.cb.trump_card = Card(data['trump_card'][0], data['trump_card'][1])
+        self.cb.trump_card.show()
+        self.grb.draw_new_hand(len(data['hand']))
 
     def Network_bid(self, data):
-        bid = self.gb.get_bid(data['hand'], data['dealer'])
+        bid = self.grb.get_bid(data['hand'], data['dealer'])
         connection.Send({'action': "bid", 'bid': bid})
 
     def Network_broadcast_bid(self, data):
         self.cb.bids[data['player']] = data['bid']
-        self.gb.receive_bid(data['player'], data['bid'])
+        self.grb.receive_bid(data['player'], data['bid'])
 
     def Network_play_card(self, data):
-        card = self.gb.get_card()
-        connection.Send({'action': 'play', 'card': [card.rank, card.suit]})
+        card = self.grb.get_card()
+        connection.Send({'action': 'play', 'card': card.to_array(), 'lead': data['lead']})
 
     def Network_broadcast_played_card(self, data):
         card = Card(data['card'][0], data['card'][1])
         card.show()
         self.cb.in_play[data['player']] = card
-        self.gb.play_card(data['player'], card)
+        if data['lead']:
+            self.cb.lead_card = card
+        self.grb.play_card(data['player'])
 
     def Network_broadcast_trick_winner(self, data):
         print(data['player'], "won the trick")
 
     def Network_start_hand(self, data):
-        self.gb.start_hand()
+        self.grb.start_hand()
 
     def Network_broadcast_hand_done(self, data):
         print("Hand is over.")

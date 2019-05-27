@@ -92,9 +92,10 @@ class ClientBoard:
         self.active_position = players.index(active)
         self.hands = {player:[] for player in players}
         self.won = {player:0 for player in players}
-        self.in_play = dict()
+        self.in_play = {player:None for player in players}
         self.bids = dict()
         self.trump_card = None
+        self.lead_card = None
 
     def get_hand(self, dealt_hand):
         for player in self.hands.keys():
@@ -104,6 +105,20 @@ class ClientBoard:
                     card.show()
             else:
                 self.hands[player] = [Card() for card in dealt_hand]
+
+    def is_playable(self, card):
+        # are you leading?
+        if not self.lead_card:
+            return True
+        # are you following suit?
+        if card.suit == self.lead_card.suit:
+            return True
+        # can you follow suit?
+        for c in self.hands[self.active]:
+            if c.suit == self.lead_card.suit:
+                return False
+
+        return True
 
 
 # testing gameboard

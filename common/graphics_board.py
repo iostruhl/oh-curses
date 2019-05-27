@@ -44,6 +44,11 @@ class GraphicsBoard:
         self.clear_hand_card(self.cb.active, self.hand_position)
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
         self.hand_position = (self.hand_position + n) % len(self.cb.hands[self.cb.active])
+        while not self.cb.is_playable(self.cb.hands[self.cb.active][self.hand_position]):
+            if n == 0:
+                self.hand_position = (self.hand_position + 1) % len(self.cb.hands[self.cb.active])
+            else:
+                self.hand_position = (self.hand_position + n) % len(self.cb.hands[self.cb.active])
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
         if (n < 0 and self.hand_position == (len(self.cb.hands[self.cb.active]) - 1)):
             self.redraw_hand(0)
@@ -73,6 +78,7 @@ class GraphicsBoard:
                 self.hand_panels[3] = [panel.new_panel(self.hand_windows[3][j])
                                        for j in range(hand_size)]
             self.draw_hand(self.cb.players[i])
+        self.draw_trump()
         self.draw_new_info_window()
 
     def collapse_hand(self, player_position):
@@ -123,6 +129,7 @@ class GraphicsBoard:
                 self.info_windows[3].refresh()
 
     def get_card(self):
+        self.hand_navigate(0)
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
         self.redraw_hand(0)
         while True:
@@ -136,8 +143,9 @@ class GraphicsBoard:
             elif key == curses.KEY_RIGHT:
                 self.hand_navigate(1)
 
-    def play_card(self, player, card):
+    def play_card(self, player):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
+        card = self.cb.in_play[player]
         if player_position == 0:
             self.played_windows[0] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
         elif player_position == 1:
@@ -160,7 +168,10 @@ class GraphicsBoard:
         possible_bids = hand_size + 1
         self.bid_position = (self.bid_position + n) % possible_bids
         if is_dealer and ((hand_size - sum(self.cb.bids.values())) == self.bid_position):
-            self.bid_position = (self.bid_position + n) % possible_bids
+            if n == 0:
+                self.bid_position = (self.bid_position + 1) % possible_bids
+            else:
+                self.bid_position = (self.bid_position + n) % possible_bids
 
     def receive_bid(self, player, bid):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
@@ -183,6 +194,7 @@ class GraphicsBoard:
             window.refresh()
 
     def get_bid(self, hand_size, is_dealer):
+        self.bid_navigate(0, hand_size, is_dealer)
         while (True):
             self.draw_bids(hand_size, is_dealer)
             key = self.stdscr.getch()
@@ -222,11 +234,9 @@ class GraphicsBoard:
         for card in range(position, len(self.cb.hands[self.cb.active])):
             self.draw_hand_card(self.cb.active, card)
 
-    def test_draw_trump(self):
+    def draw_trump(self):
         self.trump_window = curses.newwin(C_HEIGHT, C_WIDTH, PADDING, PADDING)
         self.trump_window.erase()
-        self.trump_window.attron(
-            curses.color_pair(self.cb.hands[self.cb.active][12].color()))
-        self.trump_window.addstr(
-            self.cb.hands[self.cb.active][12].ascii_rep())
+        self.trump_window.attron(curses.color_pair(self.cb.trump_card.color()))
+        self.trump_window.addstr(self.cb.trump_card.ascii_rep())
         self.trump_window.refresh()

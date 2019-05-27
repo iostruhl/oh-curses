@@ -28,7 +28,7 @@ class ClientChannel(Channel):
 
     def Network_play(self, data):
         print("Client", self.name, "sent", data)
-        self._server.handle_play_card(self.name, data['card'])
+        self._server.handle_play_card(self.name, data['card'], data['lead'])
 
 
 class OHServer(Server):
@@ -90,7 +90,7 @@ class OHServer(Server):
         self.scores = {u.name:0 for u in self.users}
 
         self.send_all({
-            'action': "start", 
+            'action': "start",
             'players': self.gb.players
             })
 
@@ -102,13 +102,13 @@ class OHServer(Server):
         for player in self.gb.players:
             print("Sending to", player)
             self.send_one(player, {
-                'action': "hand_dealt", 
-                'trump_card': self.gb.trump_card.to_array(), 
+                'action': "hand_dealt",
+                'trump_card': self.gb.trump_card.to_array(),
                 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
                 })
         self.send_one(self.gb.players[(self.hand_num - 1) % 4], {
-            'action': "bid", 
-            'hand': self.hand_num, 
+            'action': "bid",
+            'hand': self.hand_num,
             'dealer': False
             })
 
@@ -120,25 +120,26 @@ class OHServer(Server):
         if (len(self.gb.bids) == 4):
             self.next_to_play_idx = (self.hand_num - 1) % 4 # set to dealer, incremented by handle_play
             self.send_all({'action': "start_hand"})
-            self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "play_card"})
+            self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "play_card", 'lead': True})
         else:
             self.send_one(self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], {
-                'action': "bid", 
-                'hand': self.hand_num, 
+                'action': "bid",
+                'hand': self.hand_num,
                 'dealer': True if len(self.gb.bids) == 3 else False
                 })
 
 
     def handle_play_card(self, player: str, card: list, lead = False):
         self.send_all({
-            'action': "broadcast_played_card", 
-            'player': player, 
-            'card': card
+            'action': "broadcast_played_card",
+            'player': player,
+            'card': card,
+            'lead': lead
             })
         self.gb.play_card(player, Card(card[0], card[1]), lead = True if len(self.gb.in_play) == 0 else False)
         if (len(self.gb.in_play) != 4):
             self.next_to_play_idx = (self.next_to_play_idx + 1) % 4
-            self.send_one(self.gb.players[self.next_to_play_idx], {'action': "play_card"})
+            self.send_one(self.gb.players[self.next_to_play_idx], {'action': "play_card", 'lead': False})
         else:
             self.finish_trick()
 
@@ -146,7 +147,7 @@ class OHServer(Server):
     def finish_trick(self):
         winner = self.gb.finish_trick()
         self.send_all({
-            'action': "broadcast_trick_winner", 
+            'action': "broadcast_trick_winner",
             'player': winner})
         if (len(self.gb.hands[winner]) == 0):
             self.gb.assert_hand_done()
