@@ -84,7 +84,7 @@ class OHServer(Server):
 
     # --- Game Logic ---
     def start_game(self):
-        assert(self.runnable)
+        assert (self.runnable), "Can't start a non-runnable game"
         self.gb = GameBoard(players = [u.name for u in self.users])
         self.name_to_user = {u.name:u for u in self.users}
         self.scores = {u.name:0 for u in self.users}
@@ -149,8 +149,7 @@ class OHServer(Server):
             'action': "broadcast_trick_winner", 
             'player': winner})
         if (len(self.gb.hands[winner]) == 0):
-            for player in self.gb.hands:
-                assert(self.gb.hands[player] == [])
+            self.gb.assert_hand_done()
             self.finish_hand()
         else:
             self.next_to_play_idx = self.gb.players.index(winner) # start with the prev winner

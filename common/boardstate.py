@@ -29,7 +29,7 @@ class GameBoard:
     def deal_hand(self, hand_num: int):
         print("Dealing hand...", end = "")
         # can only deal from a full deck
-        assert(len(self.deck) == 52)
+        assert (len(self.deck) == 52), "Not dealing from a full deck"
         shuffle(self.deck)
 
         for player in self.players:
@@ -42,18 +42,18 @@ class GameBoard:
     # assigns a bid to a player
     def bid(self, player: str, bid: int):
         print("Player", player, "bids", bid)
-        assert(player not in self.bids)
+        assert (player not in self.bids), "Player has already bid"
         self.bids[player] = bid
 
     # put a card from a specifed player into play
     def play_card(self, player: str, card: Card, lead = False):
         # can only play a card if it's in your hand
-        assert(card in self.hands[player])
+        assert (card in self.hands[player]), "Card not in %s's hand" % player
         # player must not have already played a card
-        assert(player not in self.in_play)
+        assert (player not in self.in_play), "%s has already played a card" % player
         print("Playing card", card, "from player", player, "(trick lead)" if lead else "")
         if (lead):
-            assert(self.led_suit is None)
+            assert (self.led_suit is None), "Led suit is already set???"
             self.led_suit = card.suit
 
         self.in_play[player] = card
@@ -66,7 +66,7 @@ class GameBoard:
         print("Finishing trick")
         # everyone must have played a card
         for player in self.in_play:
-            assert(self.in_play[player] is not None)
+            assert (self.in_play[player] is not None), "Finish trick: not everyone has played a card"
 
         # calculate winner
         winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, self.trump_card.suit))
@@ -78,10 +78,11 @@ class GameBoard:
         self.led_suit = None
         return winner
 
-    def finish_hand(self):
-        print("Finishing hand")
+    # Unused - just asserts that nobody has any cards in their hand
+    def assert_hand_done(self):
+        print("Checking hand state")
         for player in self.hands:
-            assert(self.hands[player] == [])
+            assert (self.hands[player] == []), "Hand done: not everyone's hands are empty"
 
 class ClientBoard:
 
@@ -105,7 +106,7 @@ class ClientBoard:
                 self.hands[player] = [Card() for card in dealt_hand]
 
 
-# this logic will eventually go in server.py
+# testing gameboard
 if __name__ == "__main__":
     g = GameBoard()
     g.deal_hand(2)
@@ -121,5 +122,5 @@ if __name__ == "__main__":
         g.finish_trick()
         print("in play now is ", g.in_play)
         print("cards taken now are", g.cards_taken)
-    g.finish_hand()
+    g.assert_hand_done()
 

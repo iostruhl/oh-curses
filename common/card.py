@@ -30,22 +30,9 @@ class Card:
     }
 
     def __init__(self, rank: str = None, suit: str = None):
-        # Commented out these assertions so ClientBoard can have empty
-        # dummy cards to fill opponents' hands with
-        # assert(rank in self.rank_values)
         self.rank = rank
-
-        if rank:
-            self.value = self.rank_values[rank]
-        else:
-            self.value = None
-
-        # assert(suit in self.suit_ascii)
-        if suit:
-            self.suit = suit
-        else:
-            self.suit = None
-
+        self.value = self.rank_values[rank] if rank else None
+        self.suit = suit
         self.visible = False
 
     def show(self):
@@ -82,9 +69,11 @@ class Card:
                 return Card.colors[self.suit] > Card.colors[other.suit]
         return NotImplemented
 
+    # Makes printing cards nice (for debugging)
     def __repr__(self):
         return "{:s}{:s}".format(self.rank, self.suit_ascii[self.suit])
 
+    # Prints the visual representation of the card, for curses graphics
     def ascii_rep(self) -> str:
         if (self.visible):
             return (
