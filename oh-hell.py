@@ -35,21 +35,11 @@ class Client(ConnectionListener):
         self.gb = graphics_board.GraphicsBoard(self.cb)
 
     def Network_hand_dealt(self, data):
-        # print("HAND DEALT, data is", data)
-        # print("Hand has been dealt, trump suit is", data['trump_suit'])
-        # print("Hand is", data['hand'])
         self.cb.get_hand(data['hand'])
         self.gb.draw_new_hand(len(data['hand']))
 
     def Network_bid(self, data):
-        bid = -1
-        while 1:
-            try:
-                bid = int(input("Enter your bid: "))
-                break
-            except:
-                print("Error, please try again")
-                pass
+        bid = self.gb.get_bid(data['hand'], data['dealer'])
         connection.Send({'action': "bid", 'bid': bid})
 
     def Network_broadcast_bid(self, data):

@@ -99,7 +99,7 @@ class OHServer(Server):
         for player in self.gb.players:
             print("Sending to", player)
             self.send_one(player, {'action': "hand_dealt", 'trump_suit': self.gb.trump_suit, 'hand': [c.to_array() for c in self.gb.hands[player]]})
-        self.send_one(self.gb.players[0], {'action': "bid", 'dealer': False})
+        self.send_one(self.gb.players[0], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
 
 
     def handle_bid(self, player: str, bid: int):
@@ -110,9 +110,9 @@ class OHServer(Server):
             self.next_to_play_idx = 0 # start to the left of the dealer
             self.send_one(self.gb.players[0], {'action': "play_card"})
         elif (len(self.gb.bids) == 3):
-            self.send_one(self.gb.players[3], {'action': "bid", 'dealer': True})
+            self.send_one(self.gb.players[3], {'action': "bid", 'hand': self.hand_num, 'dealer': True})
         else:
-            self.send_one(self.gb.players[len(self.gb.bids)], {'action': "bid", 'dealer': False})
+            self.send_one(self.gb.players[len(self.gb.bids)], {'action': "bid", 'hand': self.hand_num, 'dealer': False})
 
 
     def handle_play_card(self, player: str, card: list, lead = False):

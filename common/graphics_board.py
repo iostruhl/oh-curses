@@ -10,6 +10,8 @@ C_HEIGHT = 11
 C_WIDTH = 13
 I_HEIGHT = 5
 I_WIDTH = 11
+B_HEIGHT = 3
+B_WIDTH = 4
 
 class GraphicsBoard:
 
@@ -24,12 +26,12 @@ class GraphicsBoard:
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
-
-        self.window = self.stdscr.subwin(0,0)
-        self.window.keypad(True)
+        self.stdscr.erase()
+        self.stdscr.refresh()
 
         self.cb = cb
         self.hand_position = 0
+        self.bid_position = 0
         self.hand_windows = [[] for player in cb.players]
         self.hand_panels = [[] for player in cb.players]
         self.played_windows = [None for player in cb.players]
@@ -57,7 +59,7 @@ class GraphicsBoard:
                                        for j in range(hand_size)]
 
                 # Initially select first card
-                self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+                # self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
             elif i == (self.cb.active_position + 1) % 4:
                 self.hand_windows[1] = [curses.newwin(11, 13, (4*PADDING)+C_HEIGHT+(j*V_SPACING), PADDING)
                                         for j in range(hand_size)]
@@ -88,6 +90,35 @@ class GraphicsBoard:
 
             elif key == curses.KEY_RIGHT or key == curses.KEY_DOWN:
                 self.hand_navigate(1)
+
+    def bid_navigate(self, n, hand_size, is_dealer):
+        possible_bids = hand_size
+        if is_dealer:
+            possible_bids -= 1
+        self.bid_position = (self.bid_position + n) % possible_bids
+
+    def draw_bids(self, hand_size, is_dealer):
+        self.bid_windows = [curses.newwin(B_HEIGHT, B_WIDTH, (3*PADDING)+(3*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(i*B_WIDTH))
+                            for i in range(hand_size)]
+
+        for window in self.bid_windows:
+            window.erase()
+            if self.bid_windows.index(window) == self.bid_position:
+                window.attron(curses.A_REVERSE)
+            window.addstr("\n %i" % self.bid_windows.index(window))
+            window.box()
+            window.refresh()
+
+    def get_bid(self, hand_size, is_dealer):
+        while (True):
+            self.draw_bids(hand_size, is_dealer)
+            key = self.stdscr.getch()
+            if key in [curses.KEY_ENTER, ord('\n')]:
+                return self.bid_position
+            elif key == curses.KEY_LEFT:
+                self.bid_navigate(-1, hand_size, is_dealer)
+            elif key == curses.KEY_RIGHT:
+                self.bid_navigate(1, hand_size, is_dealer)
 
     def draw_hand_card(self, player, card):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
