@@ -154,7 +154,7 @@ class OHServer(Server):
             self.finish_hand()
         else:
             self.next_to_play_idx = self.gb.players.index(winner) # start with the prev winner
-            self.send_one(winner, {'action': "play_card"})
+            self.send_one(winner, {'action': "play_card", 'lead': True})
 
 
     def finish_hand(self):

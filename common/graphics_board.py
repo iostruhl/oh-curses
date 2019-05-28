@@ -82,15 +82,25 @@ class GraphicsBoard:
         self.draw_new_info_window()
 
     def collapse_hand(self, player_position):
-        for window in self.hand_windows[0]:
+        window_position = (player_position - self.cb.active_position) % 4
+        for window in self.hand_windows[window_position]:
+            window.erase()
+            window.attrset(0)
+            window.refresh()
+        if window_position == 0:
+            self.hand_windows[window_position][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+        self.hand_windows[window_position].pop()
+        self.draw_hand(self.cb.players[player_position])
+
+    def finish_trick(self, winner):
+        self.clear_played_cards()
+        self.refresh_info_window(winner)
+        self.refresh_info_window(self.cb.active)
+
+    def clear_played_cards(self):
+        for window in self.played_windows:
             window.erase()
             window.refresh()
-        hand_size = len(self.cb.hands[self.cb.players[player_position]])
-        self.hand_windows[0] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(i*H_SPACING))
-                                for i in range(hand_size)]
-        self.hand_panels[0] = [panel.new_panel(self.hand_windows[0][i])
-                               for i in range(hand_size)]
-        self.draw_hand(self.cb.players[player_position])
 
     def refresh_info_window(self, player):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
@@ -129,9 +139,10 @@ class GraphicsBoard:
                 self.info_windows[3].refresh()
 
     def get_card(self):
+        self.hand_position = 0
         self.hand_navigate(0)
         self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
-        self.redraw_hand(0)
+        self.draw_hand(self.cb.active)
         while True:
             key = self.stdscr.getch()
             if key in [curses.KEY_ENTER, ord('\n')]:
@@ -149,11 +160,18 @@ class GraphicsBoard:
         if player_position == 0:
             self.played_windows[0] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
         elif player_position == 1:
+            self.cb.hands[player].pop()
             self.played_windows[1] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(3*H_SPACING))
+            self.collapse_hand(self.cb.players.index(player))
         elif player_position == 2:
+            self.cb.hands[player].pop()
             self.played_windows[2] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT, (2*PADDING)+C_WIDTH+(6*H_SPACING))
+            self.collapse_hand(self.cb.players.index(player))
+            self.refresh_info_window(player)
         elif player_position == 3:
+            self.cb.hands[player].pop()
             self.played_windows[3] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(9*H_SPACING))
+            self.collapse_hand(self.cb.players.index(player))
         self.played_windows[player_position].erase()
         self.played_windows[player_position].attron(curses.color_pair(card.color()))
         self.played_windows[player_position].addstr(card.ascii_rep())
@@ -214,9 +232,6 @@ class GraphicsBoard:
         if (self.cb.hands[player][card].visible):
             self.hand_windows[player_position][card].attron(
             curses.color_pair(self.cb.hands[player][card].color()))
-        # else:
-        #     self.hand_windows[player_position][card].attroff(
-        #     curses.color_pair(self.cb.hands[player][card].color()))
         self.hand_windows[player_position][card].addstr(
             self.cb.hands[player][card].ascii_rep())
         self.hand_windows[player_position][card].refresh()

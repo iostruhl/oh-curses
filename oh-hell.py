@@ -61,7 +61,10 @@ class Client(ConnectionListener):
         self.grb.play_card(data['player'])
 
     def Network_broadcast_trick_winner(self, data):
-        print(data['player'], "won the trick")
+        self.cb.in_play = {player:None for player in self.cb.players}
+        self.cb.lead_card = None
+        self.cb.won[data['player']] += 1
+        self.grb.finish_trick(data['player'])
 
     def Network_start_hand(self, data):
         self.grb.start_hand()
