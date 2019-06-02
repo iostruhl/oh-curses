@@ -70,7 +70,7 @@ class Client(ConnectionListener):
         self.grb.start_hand()
 
     def Network_broadcast_hand_done(self, data):
-        print("Hand is over.")
+        self.grb.clean_board()
 
 
     # built in stuff

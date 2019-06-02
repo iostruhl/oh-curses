@@ -39,7 +39,7 @@ class OHServer(Server):
         self.users = []
         self.name_to_user = dict()
         self.runnable = True
-        self.hand_num = 5
+        self.hand_num = 1
         self.scores = dict()
         self.next_to_play_idx = 0
         self.gb = None

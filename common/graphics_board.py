@@ -1,7 +1,6 @@
 import curses
 from curses import panel
 from .boardstate import ClientBoard
-import logging
 
 PADDING = 1
 V_SPACING = 1
@@ -37,7 +36,15 @@ class GraphicsBoard:
         self.played_windows = [None for player in cb.players]
         self.trump_window = None
         self.info_windows = [None for player in cb.players]
-        logging.basicConfig(filename="log.txt", level=logging.DEBUG)
+
+    def clean_board(self):
+        self.hand_windows = [[] for player in self.cb.players]
+        self.hand_panels = [[] for player in self.cb.players]
+        self.played_windows = [None for player in self.cb.players]
+        self.trump_window = None
+        self.info_windows = [None for player in self.cb.players]
+        self.stdscr.erase()
+        self.stdscr.refresh()
 
     def hand_navigate(self, n):
         hand_len = len(self.cb.hands[self.cb.active])
