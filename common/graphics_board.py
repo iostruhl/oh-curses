@@ -37,6 +37,9 @@ class GraphicsBoard:
         self.trump_window = None
         self.info_windows = [None for player in cb.players]
 
+    def __del__(self):
+        curses.endwin()
+
     def clean_board(self):
         self.hand_windows = [[] for player in self.cb.players]
         self.hand_panels = [[] for player in self.cb.players]
