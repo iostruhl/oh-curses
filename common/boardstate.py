@@ -9,6 +9,7 @@ class GameBoard:
         self.players = players
         self.in_play = dict()
         self.hands = {player:[] for player in self.players}
+        self.scores = {player:0 for player in self.players}
         self.bids = dict()
         self.cards_taken = {player:[] for player in self.players}
         self.trump_card = None
@@ -78,11 +79,25 @@ class GameBoard:
         self.led_suit = None
         return winner
 
+    def update_scores(self) -> dict:
+        handscores = dict()
+        for player in self.players:
+            if len(self.cards_taken[player]) / 4 == self.bids[player]: # made hand
+                handscores[player] = int(10 + (self.bids[player] ** 2))
+            else:
+                diff = abs((len(self.cards_taken[player]) / 4) - self.bids[player])
+                handscores[player] = int(-5 * (diff * (diff + 1)) / 2)
+            # update aggreate scores
+            self.scores[player] += handscores[player]
+
+        return handscores
+
+
     # Unused - just asserts that nobody has any cards in their hand
     def assert_hand_done(self):
-        print("Checking hand state")
         for player in self.hands:
             assert (self.hands[player] == []), "Hand done: not everyone's hands are empty"
+
 
 class ClientBoard:
 

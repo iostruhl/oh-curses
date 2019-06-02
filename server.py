@@ -1,9 +1,10 @@
 import sys
 from common.boardstate import GameBoard
-from time import sleep, localtime
+from time import sleep
 from common.card import Card
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
+from common import sheets_logging as sl
 
 class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
@@ -158,7 +159,12 @@ class OHServer(Server):
 
 
     def finish_hand(self):
-        self.send_all({'action': "broadcast_hand_done"})
+        scores = self.gb.update_scores()
+        sl.log_hand(scores)
+        self.send_all({
+            'action': "broadcast_hand_done",
+            'scores': self.gb.scores
+            })
         self.gb.collect_cards()
         self.hand_num += 1
         if (self.hand_num > 13):
