@@ -126,3 +126,7 @@ dmypy.json
 .DS_store
 *.txt
 *.swp
+
+# Added by Isaac
+credentials.json
+token.pickle
