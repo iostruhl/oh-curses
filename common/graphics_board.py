@@ -112,7 +112,7 @@ class GraphicsBoard:
     def refresh_info_window(self, player):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
         self.info_windows[player_position].erase()
-        self.info_windows[player_position].addstr('\n '+player+'\n')
+        self.info_windows[player_position].addstr('\n '+self.short_name(player)+'\n')
         self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
         self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
         self.info_windows[player_position].box()
@@ -123,25 +123,25 @@ class GraphicsBoard:
             if i == self.cb.active_position:
                 self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (2*PADDING)+(2*C_HEIGHT)+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
                 self.info_windows[0].erase()
-                self.info_windows[0].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[0].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[0].box()
                 self.info_windows[0].refresh()
             elif i == (self.cb.active_position + 1) % 4:
                 self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH)
                 self.info_windows[1].erase()
-                self.info_windows[1].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[1].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[1].box()
                 self.info_windows[1].refresh()
             elif i == (self.cb.active_position + 2) % 4:
                 self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING, (2*PADDING)+C_WIDTH+(6*H_SPACING))
                 self.info_windows[2].erase()
-                self.info_windows[2].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[2].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[2].box()
                 self.info_windows[2].refresh()
             elif i == (self.cb.active_position + 3) % 4:
                 self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(12*H_SPACING))
                 self.info_windows[3].erase()
-                self.info_windows[3].addstr('\n '+self.cb.players[i]+'\n')
+                self.info_windows[3].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[3].box()
                 self.info_windows[3].refresh()
 
@@ -262,3 +262,8 @@ class GraphicsBoard:
         self.trump_window.attron(curses.color_pair(self.cb.trump_card.color()))
         self.trump_window.addstr(self.cb.trump_card.ascii_rep())
         self.trump_window.refresh()
+
+    def short_name(self, name):
+        if name.split(' ')[0].lower() == "alex":
+            return name.split(' ')[1]
+        return name.split(' ')[0]
