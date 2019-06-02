@@ -5,53 +5,68 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
-SAMPLE_RANGE_NAME = 'Class Data!A2:E'
+# Sheet ID and range
+OH_HELL_SHEET_ID = '1YMAGaRRk8fyXrDx_AK-gkubVFqKnrK9p8CE9znAfZKw'
+OH_HELL_SHEET_RANGE = 'Scores!B3:F'
+
+# set up credentials
+creds = None
+
+# load creds from storage if possible
+if os.path.exists(os.path.join(os.path.dirname(__file__), "token.pickle")):
+    with open(os.path.join(os.path.dirname(__file__), "token.pickle"), 'rb') as token:
+        creds = pickle.load(token)
+# create creds if necessary
+if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(os.path.join(os.path.dirname(__file__), "credentials.json"), SCOPES)
+        creds = flow.run_local_server()
+    # save credentials for next run
+    with open(os.path.join(os.path.dirname(__file__), "token.pickle"), 'wb') as token:
+        pickle.dump(creds, token)
+
+# create hook to api
+service = build('sheets', 'v4', credentials=creds)
 
 def log_hand(handscores: dict):
     print("Logging hand not implemented yet, handscores is", handscores)
 
-def main():
-    """Shows basic usage of the Sheets API.
-    Prints values from a sample spreadsheet.
-    """
-    creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server()
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+def log_game(gamescores: dict):
+    print("LOGGING GAME")
+    result = service.spreadsheets().values().get(
+            spreadsheetId = OH_HELL_SHEET_ID,
+            range = OH_HELL_SHEET_RANGE
+        ).execute()
 
-    service = build('sheets', 'v4', credentials=creds)
-
-    # Call the Sheets API
-    sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                range=SAMPLE_RANGE_NAME).execute()
     values = result.get('values', [])
+    row_add_range = 'Scores!B%d:F' % (len(values) + 3)
+    print("updating to", row_add_range)
 
-    if not values:
-        print('No data found.')
-    else:
-        print('Name, Major:')
-        for row in values:
-            # Print columns A and E, which correspond to indices 0 and 4.
-            print('%s, %s' % (row[0], row[4]))
+    result = service.spreadsheets().values().append(
+            spreadsheetId = OH_HELL_SHEET_ID,
+            range = row_add_range,
+            valueInputOption = "USER_ENTERED",
+            body = {
+                'values': [[
+                    gamescores["Ben Harpe"]     if "Ben Harpe"      in gamescores else '',
+                    gamescores["Alex Mariona"]  if "Alex Mariona"   in gamescores else '',
+                    gamescores["Owen Schafer"]  if "Owen Schafer"   in gamescores else '',
+                    gamescores["Isaac Struhl"]  if "Isaac Struhl"   in gamescores else '',
+                    gamescores["Alex Wulff"]    if "Alex Wulff"     in gamescores else ''
+                ]]
+            }
+        ).execute()
+    print(result)
 
+# testing log_game
 if __name__ == '__main__':
-    main()
+    log_game({
+        "Alex Mariona": 240,
+        "Owen Schafer": 150,
+        "Ben Harpe": 140,
+        "Alex Wulff": 130
+        })

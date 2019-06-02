@@ -25,10 +25,19 @@ class Client(ConnectionListener):
     #######################################
 
     def Network_users(self, data):
-        print("*** users: " + ", ".join([p for p in data['users']]))
+        print("*** users:", ', '.join([p for p in data['users']]), "***")
+
+    def Network_server_name(self, data):
+        print("Server set name to", data['name'])
+        self.name = data['name']
+        connection.Send({
+                'action': "ready",
+                'name': self.name
+            })
 
     def Network_pause(self, data):
-        print("*** USER HAS DISCONNECTED, BAD BAD BAD\nFAILS SILENTLY FOR NOW, WILL BLOW UP LATER")
+        print("*** USER HAS DISCONNECTED, FATAL ***")
+        exit()
 
     def Network_start(self, data):
         self.cb = ClientBoard(data['players'], self.name)

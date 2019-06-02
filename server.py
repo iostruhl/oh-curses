@@ -5,6 +5,7 @@ from common.card import Card
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
 from common import sheets_logging as sl
+from fuzzywuzzy import process
 
 class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
@@ -20,8 +21,19 @@ class ClientChannel(Channel):
 
     def Network_name(self, data):
         print("Client", self.name, "sent", data)
-        self.name = data['name']
+        # chooses the best matched full name, so that we can log easily at the end
+        choices = ["Ben Harpe", "Alex Wulff", "Alex Mariona", "Owen Schafer", "Isaac Struhl"]
+        self.name = process.extract(data['name'], choices, limit=1)[0][0]
         self._server.send_users()
+        self.Send({
+                'action': "server_name",
+                'name': self.name
+            })
+
+    def Network_ready(self, data):
+        print("Client", self.name, "sent", data)
+        assert(self.name == data['name'])
+        self._server.handle_ready()
 
     def Network_bid(self, data):
         print("Client", self.name, "sent", data)
@@ -39,7 +51,7 @@ class OHServer(Server):
         Server.__init__(self, *args, **kwargs)
         self.users = []
         self.name_to_user = dict()
-        self.runnable = True
+        self.ready_count = 0
         self.hand_num = 1
         self.scores = dict()
         self.next_to_play_idx = 0
@@ -57,7 +69,7 @@ class OHServer(Server):
         print("Remove Player" + str(player.addr))
         self.users.remove(player)
         if (self.gb):
-            self.runnable = False
+            self.ready_count -= 1
             self.send_pause()
 
     def send_pause(self):
@@ -65,10 +77,6 @@ class OHServer(Server):
 
     def send_users(self):
         self.send_all({'action': "users", 'users': [u.name for u in self.users]})
-        if (len(self.users) == 4 and (u.name != "ANON" for u in self.users)):
-            print(len(self.users), [u.name for u in self.users])
-            print("STARTING!!!")
-            self.start_game()
 
     def send_all(self, data):
         print("Server: sending to ALL :", data)
@@ -84,8 +92,13 @@ class OHServer(Server):
             sleep(0.0001)
 
     # --- Game Logic ---
+    def handle_ready(self):
+        self.ready_count += 1
+        if (self.ready_count == 4):
+            self.start_game()
+
     def start_game(self):
-        assert (self.runnable), "Can't start a non-runnable game"
+        print("Game starting.")
         self.gb = GameBoard(players = [u.name for u in self.users])
         self.name_to_user = {u.name:u for u in self.users}
         self.scores = {u.name:0 for u in self.users}
@@ -160,7 +173,6 @@ class OHServer(Server):
 
     def finish_hand(self):
         scores = self.gb.update_scores()
-        sl.log_hand(scores)
         self.send_all({
             'action': "broadcast_hand_done",
             'scores': self.gb.scores
@@ -176,6 +188,8 @@ class OHServer(Server):
     def end_game(self):
         print("Game Complete!")
         print("Vars at end:", vars(self))
+        print("Logging game, scores are", self.gb.scores)
+        sl.log_game(self.gb.scores)
         exit()
 
 # Run the server
