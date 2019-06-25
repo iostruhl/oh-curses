@@ -115,11 +115,18 @@ class OHServer(Server):
         self.gb.deal_hand(self.hand_num)
         for player in self.gb.players:
             print("Sending to", player)
-            self.send_one(player, {
-                'action': "hand_dealt",
-                'trump_card': self.gb.trump_card.to_array(),
-                'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
-                })
+            if self.gb.trump_card:
+                self.send_one(player, {
+                    'action': "hand_dealt",
+                    'trump_card': self.gb.trump_card.to_array(),
+                    'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
+                    })
+            else:
+                self.send_one(player, {
+                    'action': "hand_dealt",
+                    'trump_card': None,
+                    'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
+                    })
         self.send_one(self.gb.players[(self.hand_num - 1) % 4], {
             'action': "bid",
             'hand': self.hand_num,
@@ -189,6 +196,12 @@ class OHServer(Server):
         print("Game Complete!")
         print("Vars at end:", vars(self))
         print("Logging game, scores are", self.gb.scores)
+        winner = max(self.gb.scores, key=lambda player: self.gb.scores[player])
+        self.send_all({
+            'action': "broadcast_end_game",
+            'winner': winner,
+            'scores': self.gb.scores
+            })
         sl.log_game(self.gb.scores)
         exit()
 

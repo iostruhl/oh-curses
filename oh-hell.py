@@ -45,8 +45,11 @@ class Client(ConnectionListener):
 
     def Network_hand_dealt(self, data):
         self.cb.get_hand(data['hand'])
-        self.cb.trump_card = Card(data['trump_card'][0], data['trump_card'][1])
-        self.cb.trump_card.show()
+        if data['trump_card']:
+            self.cb.trump_card = Card(data['trump_card'][0], data['trump_card'][1])
+            self.cb.trump_card.show()
+        else:
+            self.cb.trump_card = None
         self.grb.draw_new_hand(len(data['hand']))
 
     def Network_bid(self, data):
@@ -79,8 +82,11 @@ class Client(ConnectionListener):
         self.grb.start_hand()
 
     def Network_broadcast_hand_done(self, data):
+        self.cb.bids = dict()
+        for player in self.cb.players:
+            self.cb.won[player] = 0
+            self.cb.scores[player] = data['scores'][player]
         self.grb.clean_board()
-
 
     # built in stuff
 

@@ -38,6 +38,8 @@ class GameBoard:
                 self.hands[player].append(self.deck.pop())
         if (hand_num < 13):
             self.trump_card = self.deck[0]
+        else:
+            self.trump_card = None
         print("trump card is", self.trump_card)
 
     # assigns a bid to a player
@@ -70,7 +72,10 @@ class GameBoard:
             assert (self.in_play[player] is not None), "Finish trick: not everyone has played a card"
 
         # calculate winner
-        winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, self.trump_card.suit))
+        if self.trump_card:
+            winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, self.trump_card.suit))
+        else:
+            winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, None))
         print("Winner is", winner)
         # move cards in play to the winner's pile
         self.cards_taken[winner].extend(self.in_play.values())
@@ -108,6 +113,7 @@ class ClientBoard:
         self.hands = {player:[] for player in players}
         self.won = {player:0 for player in players}
         self.in_play = {player:None for player in players}
+        self.scores = {player:0 for player in players}
         self.bids = dict()
         self.trump_card = None
         self.lead_card = None
