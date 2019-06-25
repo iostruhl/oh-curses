@@ -4,6 +4,7 @@ from sys import stdin, exit
 from common.card import Card
 from common.boardstate import ClientBoard
 import common.graphics_board as graphics_board
+import shutil
 
 from PodSixNet.Connection import connection, ConnectionListener
 
@@ -107,6 +108,8 @@ if __name__ == "__main__":
         print("Usage:", sys.argv[0], "host:port name")
         print("e.g.", sys.argv[0], "localhost:8080 Isaac")
     else:
+        size = shutil.get_terminal_size()
+        assert (size.columns >= 101 and size.lines >= 58), "Resize terminal to at least 101x58"
         host, port = sys.argv[1].split(":")
         c = Client(host, int(port), sys.argv[2])
         while 1:
