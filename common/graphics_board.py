@@ -7,8 +7,8 @@ V_SPACING = 1
 H_SPACING = 5
 C_HEIGHT = 11
 C_WIDTH = 13
-I_HEIGHT = 5
-I_WIDTH = C_HEIGHT
+I_HEIGHT = 6
+I_WIDTH = 13
 B_HEIGHT = 3
 B_WIDTH = 4
 
@@ -37,6 +37,9 @@ class GraphicsBoard:
         self.trump_window = None
         self.info_windows = [None for player in cb.players]
 
+        self.cols_offset = (curses.COLS - 101) // 2
+        self.rows_offset = (curses.LINES - 58) // 2
+
     def __del__(self):
         curses.nocbreak()
         curses.echo()
@@ -54,14 +57,14 @@ class GraphicsBoard:
     def hand_navigate(self, n):
         hand_len = len(self.cb.hands[self.cb.active])
         self.clear_hand_card(self.cb.active, self.hand_position)
-        self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+        self.hand_windows[0][self.hand_position].mvwin((5*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT+self.rows_offset, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING)+self.cols_offset)
         self.hand_position = (self.hand_position + n) % len(self.cb.hands[self.cb.active])
         while not self.cb.is_playable(self.cb.hands[self.cb.active][self.hand_position]):
             if n == 0:
                 self.hand_position = (self.hand_position + 1) % len(self.cb.hands[self.cb.active])
             else:
                 self.hand_position = (self.hand_position + n) % len(self.cb.hands[self.cb.active])
-        self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+        self.hand_windows[0][self.hand_position].mvwin((5*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2+self.rows_offset, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING)+self.cols_offset)
         if (n < 0 and self.hand_position == (len(self.cb.hands[self.cb.active]) - 1)):
             self.redraw_hand(0)
         else:
@@ -70,22 +73,22 @@ class GraphicsBoard:
     def draw_new_hand(self, hand_size: int):
         for i in range(len(self.cb.players)):
             if i == self.cb.active_position:
-                self.hand_windows[0] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(j*H_SPACING))
+                self.hand_windows[0] = [curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT+self.rows_offset, (2*PADDING)+C_WIDTH+(j*H_SPACING)+self.cols_offset)
                                         for j in range(hand_size)]
                 self.hand_panels[0] = [panel.new_panel(self.hand_windows[0][j])
                                        for j in range(hand_size)]
             elif i == (self.cb.active_position + 1) % 4:
-                self.hand_windows[1] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(j*V_SPACING), PADDING)
+                self.hand_windows[1] = [curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+(j*V_SPACING)+self.rows_offset, PADDING+self.cols_offset)
                                         for j in range(hand_size)]
                 self.hand_panels[1] = [panel.new_panel(self.hand_windows[1][j])
                                        for j in range(hand_size)]
             elif i == (self.cb.active_position + 2) % 4:
-                self.hand_windows[2] = [curses.newwin(C_HEIGHT, C_WIDTH, PADDING, (2*PADDING)+C_WIDTH+(j*H_SPACING))
+                self.hand_windows[2] = [curses.newwin(C_HEIGHT, C_WIDTH, PADDING+self.rows_offset, (2*PADDING)+C_WIDTH+(j*H_SPACING)+self.cols_offset)
                                         for j in range(hand_size)]
                 self.hand_panels[2] = [panel.new_panel(self.hand_windows[2][j])
                                        for j in range(hand_size)]
             elif i == (self.cb.active_position + 3) % 4:
-                self.hand_windows[3] = [curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(j*V_SPACING), (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING))
+                self.hand_windows[3] = [curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+(j*V_SPACING)+self.rows_offset, (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING)+self.cols_offset)
                                         for j in range(hand_size)]
                 self.hand_panels[3] = [panel.new_panel(self.hand_windows[3][j])
                                        for j in range(hand_size)]
@@ -100,7 +103,7 @@ class GraphicsBoard:
             window.attrset(0)
             window.refresh()
         if window_position == 0:
-            self.hand_windows[window_position][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+            self.hand_windows[window_position][self.hand_position].mvwin((5*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT+self.rows_offset, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING)+self.cols_offset)
         self.hand_windows[window_position].pop()
         self.draw_hand(self.cb.players[player_position])
 
@@ -118,6 +121,7 @@ class GraphicsBoard:
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
         self.info_windows[player_position].erase()
         self.info_windows[player_position].addstr('\n '+self.short_name(player)+'\n')
+        self.info_windows[player_position].addstr(' '+f'Score: {self.cb.scores[player]}'+'\n')
         self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
         self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
         self.info_windows[player_position].box()
@@ -126,34 +130,38 @@ class GraphicsBoard:
     def draw_new_info_window(self):
         for i in range(len(self.cb.players)):
             if i == self.cb.active_position:
-                self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (2*PADDING)+(2*C_HEIGHT)+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
+                self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (3*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+self.rows_offset, (1*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
                 self.info_windows[0].erase()
                 self.info_windows[0].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
+                self.info_windows[0].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
                 self.info_windows[0].box()
                 self.info_windows[0].refresh()
             elif i == (self.cb.active_position + 1) % 4:
-                self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH)
+                self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING)+self.rows_offset, (2*PADDING)+C_WIDTH+self.cols_offset)
                 self.info_windows[1].erase()
                 self.info_windows[1].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
+                self.info_windows[1].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
                 self.info_windows[1].box()
                 self.info_windows[1].refresh()
             elif i == (self.cb.active_position + 2) % 4:
-                self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING, (2*PADDING)+C_WIDTH+(6*H_SPACING))
+                self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING+self.rows_offset, (1*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
                 self.info_windows[2].erase()
                 self.info_windows[2].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
+                self.info_windows[2].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
                 self.info_windows[2].box()
                 self.info_windows[2].refresh()
             elif i == (self.cb.active_position + 3) % 4:
-                self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(12*H_SPACING))
+                self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING)+self.rows_offset, C_WIDTH+(12*H_SPACING)+self.cols_offset)
                 self.info_windows[3].erase()
                 self.info_windows[3].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
+                self.info_windows[3].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
                 self.info_windows[3].box()
                 self.info_windows[3].refresh()
 
     def get_card(self):
         self.hand_position = 0
         self.hand_navigate(0)
-        self.hand_windows[0][self.hand_position].mvwin((4*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING))
+        self.hand_windows[0][self.hand_position].mvwin((5*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT-2+self.rows_offset, (2*PADDING)+C_WIDTH+(self.hand_position*H_SPACING)+self.cols_offset)
         self.draw_hand(self.cb.active)
         while True:
             key = self.stdscr.getch()
@@ -170,19 +178,19 @@ class GraphicsBoard:
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
         card = self.cb.in_play[player]
         if player_position == 0:
-            self.played_windows[0] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(12*V_SPACING), (2*PADDING)+C_WIDTH+(6*H_SPACING))
+            self.played_windows[0] = curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+(12*V_SPACING)+self.rows_offset, (2*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
         elif player_position == 1:
             self.cb.hands[player].pop()
-            self.played_windows[1] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(3*H_SPACING))
+            self.played_windows[1] = curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+(6*V_SPACING)+self.rows_offset, (2*PADDING)+C_WIDTH+(3*H_SPACING)+self.cols_offset)
             self.collapse_hand(self.cb.players.index(player))
         elif player_position == 2:
             self.cb.hands[player].pop()
-            self.played_windows[2] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT, (2*PADDING)+C_WIDTH+(6*H_SPACING))
+            self.played_windows[2] = curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+self.rows_offset, (2*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
             self.collapse_hand(self.cb.players.index(player))
             self.refresh_info_window(player)
         elif player_position == 3:
             self.cb.hands[player].pop()
-            self.played_windows[3] = curses.newwin(C_HEIGHT, C_WIDTH, (4*PADDING)+C_HEIGHT+(6*V_SPACING), (2*PADDING)+C_WIDTH+(9*H_SPACING))
+            self.played_windows[3] = curses.newwin(C_HEIGHT, C_WIDTH, (5*PADDING)+C_HEIGHT+(6*V_SPACING)+self.rows_offset, (2*PADDING)+C_WIDTH+(9*H_SPACING)+self.cols_offset)
             self.collapse_hand(self.cb.players.index(player))
         self.played_windows[player_position].erase()
         self.played_windows[player_position].attron(curses.color_pair(card.color()))
@@ -210,7 +218,7 @@ class GraphicsBoard:
         self.info_windows[player_position].refresh()
 
     def draw_bids(self, hand_size, is_dealer):
-        self.bid_windows = [curses.newwin(B_HEIGHT, B_WIDTH, (3*PADDING)+(3*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT, (2*PADDING)+C_WIDTH+(i*B_WIDTH))
+        self.bid_windows = [curses.newwin(B_HEIGHT, B_WIDTH, (3*PADDING)+(3*C_HEIGHT)+(12*V_SPACING)+I_HEIGHT+self.rows_offset, (2*PADDING)+C_WIDTH+(i*B_WIDTH)+self.cols_offset)
                             for i in range(hand_size + 1)]
 
         for window in self.bid_windows:
@@ -224,6 +232,7 @@ class GraphicsBoard:
             window.refresh()
 
     def get_bid(self, hand_size, is_dealer):
+        self.bid_position = 0
         self.bid_navigate(0, hand_size, is_dealer)
         while (True):
             self.draw_bids(hand_size, is_dealer)
@@ -262,11 +271,12 @@ class GraphicsBoard:
             self.draw_hand_card(self.cb.active, card)
 
     def draw_trump(self):
-        self.trump_window = curses.newwin(C_HEIGHT, C_WIDTH, PADDING, PADDING)
-        self.trump_window.erase()
-        self.trump_window.attron(curses.color_pair(self.cb.trump_card.color()))
-        self.trump_window.addstr(self.cb.trump_card.ascii_rep())
-        self.trump_window.refresh()
+        if self.cb.trump_card:
+            self.trump_window = curses.newwin(C_HEIGHT, C_WIDTH, PADDING+self.rows_offset, PADDING+self.cols_offset)
+            self.trump_window.erase()
+            self.trump_window.attron(curses.color_pair(self.cb.trump_card.color()))
+            self.trump_window.addstr(self.cb.trump_card.ascii_rep())
+            self.trump_window.refresh()
 
     def short_name(self, name):
         if name.split(' ')[0].lower() == "alex":
