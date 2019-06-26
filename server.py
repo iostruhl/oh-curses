@@ -82,8 +82,9 @@ class OHServer(Server):
         print("Server: sending to ALL :", data)
         [u.Send(data) for u in self.users]
 
-    def send_one(self, name, data):
-        print("Server: sending to", name, ":", data)
+    def send_one(self, name, data, echo = True):
+        if echo:
+            print("Server: sending to", name, ":", data)
         self.name_to_user[name].Send(data)
 
     def Launch(self):
@@ -119,7 +120,7 @@ class OHServer(Server):
                 'action': "hand_dealt",
                 'trump_card': self.gb.trump_card.to_array(),
                 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
-                })
+                }, echo = False)
         self.send_one(self.gb.players[(self.hand_num - 1) % 4], {
             'action': "bid",
             'hand': self.hand_num,

@@ -38,6 +38,8 @@ class GraphicsBoard:
         self.info_windows = [None for player in cb.players]
 
     def __del__(self):
+        curses.nocbreak()
+        curses.echo()
         curses.endwin()
 
     def clean_board(self):
