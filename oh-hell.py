@@ -77,6 +77,7 @@ class Client(ConnectionListener):
         self.cb.in_play = {player:None for player in self.cb.players}
         self.cb.lead_card = None
         self.cb.won[data['player']] += 1
+        sleep(2)
         self.grb.finish_trick(data['player'])
 
     def Network_start_hand(self, data):
