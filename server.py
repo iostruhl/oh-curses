@@ -68,8 +68,8 @@ class OHServer(Server):
     def remove_player(self, player):
         print("Remove Player" + str(player.addr))
         self.users.remove(player)
+        self.ready_count -= 1
         if (self.gb):
-            self.ready_count -= 1
             self.send_pause()
 
     def send_pause(self):
