@@ -9,11 +9,12 @@ import shutil
 from PodSixNet.Connection import connection, ConnectionListener
 
 class Client(ConnectionListener):
-    def __init__(self, host, port, name = "ANON"):
+    def __init__(self, host, port, name = "ANON", sort_hand_ascending = False):
         self.Connect((host, port))
         print("Oh Hell client started")
         print("Ctrl-C to exit")
         self.name = name
+        self.sort_hand_ascending = sort_hand_ascending
         # get a nickname from the user before starting
         connection.Send({"action": "name", "name": name})
 
@@ -45,6 +46,9 @@ class Client(ConnectionListener):
         self.grb = graphics_board.GraphicsBoard(self.cb)
 
     def Network_hand_dealt(self, data):
+        # Reverse hand order if player wants to sort it backwards.
+        if self.sort_hand_ascending:
+            data['hand'] = data['hand'][::-1]
         self.cb.get_hand(data['hand'])
         if data['trump_card']:
             self.cb.trump_card = Card(data['trump_card'][0], data['trump_card'][1])
@@ -113,14 +117,14 @@ class Client(ConnectionListener):
 
 # Run the client
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage:", sys.argv[0], "host:port name")
+    if len(sys.argv) not in [3,4]:
+        print("Usage:", sys.argv[0], "host:port name [--sort_hand_ascending]")
         print("e.g.", sys.argv[0], "localhost:8080 Isaac")
     else:
         size = shutil.get_terminal_size()
         assert (size.columns >= 101 and size.lines >= 58), "Resize terminal to at least 101x58"
         host, port = sys.argv[1].split(":")
-        c = Client(host, int(port), sys.argv[2])
+        c = Client(host, int(port), sys.argv[2], len(sys.argv) == 4)
         while 1:
             c.Loop()
             sleep(0.001)
