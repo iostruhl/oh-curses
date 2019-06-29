@@ -142,6 +142,7 @@ class OHServer(Server):
                 'hand': [c.to_array() for c in sorted(self.gb.hands[player])]
                 }, echo = False)
 
+        self.send_all({'action': "broadcast_current_actor", 'actor': self.gb.players[(self.hand_num - 1) % 4], 'hand_num': self.hand_num})
         self.send_one(self.gb.players[(self.hand_num - 1) % 4], {
             'action': "bid",
             'hand': self.hand_num,
@@ -155,12 +156,13 @@ class OHServer(Server):
         if (len(self.gb.bids) == 4):
             self.next_to_play_idx = (self.hand_num - 1) % 4 # set to dealer, incremented by handle_play
             self.send_all({'action': "start_hand"})
-            self.send_one(self.gb.players[(self.hand_num - 1) % 4], {'action': "play_card", 'lead': True})
+            self.send_all({'action': "broadcast_current_actor", 'actor': self.gb.players[self.next_to_play_idx], 'hand_num': self.hand_num})
+            self.send_one(self.gb.players[self.next_to_play_idx], {'action': "play_card", 'lead': True})
         else:
+            self.send_all({'action': "broadcast_current_actor", 'actor': self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], 'hand_num': self.hand_num})
             self.send_one(self.gb.players[((self.hand_num - 1) + len(self.gb.bids)) % 4], {
                 'action': "bid",
-                'hand': self.hand_num,
-                'dealer': True if len(self.gb.bids) == 3 else False
+                'hand': self.hand_num, 'dealer': True if len(self.gb.bids) == 3 else False
                 })
 
 
@@ -174,6 +176,7 @@ class OHServer(Server):
         self.gb.play_card(player, Card(card[0], card[1]), lead = True if len(self.gb.in_play) == 0 else False)
         if (len(self.gb.in_play) != 4):
             self.next_to_play_idx = (self.next_to_play_idx + 1) % 4
+            self.send_all({'action': "broadcast_current_actor", 'actor': self.gb.players[self.next_to_play_idx], 'hand_num': self.hand_num})
             self.send_one(self.gb.players[self.next_to_play_idx], {'action': "play_card", 'lead': False})
         else:
             self.finish_trick()
@@ -189,6 +192,7 @@ class OHServer(Server):
             self.finish_hand()
         else:
             self.next_to_play_idx = self.gb.players.index(winner) # start with the prev winner
+            self.send_all({'action': "broadcast_current_actor", 'actor': self.gb.players[self.next_to_play_idx], 'hand_num': self.hand_num})
             self.send_one(winner, {'action': "play_card", 'lead': True})
 
 

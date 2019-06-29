@@ -11,6 +11,8 @@ I_HEIGHT = 6
 I_WIDTH = 13
 B_HEIGHT = 3
 B_WIDTH = 4
+H_HEIGHT = 5
+H_WIDTH = 20
 
 class GraphicsBoard:
 
@@ -24,6 +26,7 @@ class GraphicsBoard:
         curses.start_color()
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_CYAN, curses.COLOR_BLACK)
         self.stdscr.erase()
@@ -40,6 +43,7 @@ class GraphicsBoard:
 
         self.cols_offset = (curses.COLS - 101) // 2
         self.rows_offset = (curses.LINES - 58) // 2
+        self.hand_info_window = curses.newwin(H_HEIGHT, H_WIDTH, PADDING+self.rows_offset, (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING)+self.cols_offset)
 
     def __del__(self):
         curses.nocbreak()
@@ -122,13 +126,23 @@ class GraphicsBoard:
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
         if player == self.cb.dealer:
             self.info_windows[player_position].attron(curses.color_pair(5))
+        if player == self.cb.actor:
+            self.info_windows[player_position].attron(curses.A_BLINK)
+        else:
+            self.info_windows[player_position].attroff(curses.A_BLINK)
         self.info_windows[player_position].erase()
         self.info_windows[player_position].addstr('\n '+self.short_name(player)+'\n')
         self.info_windows[player_position].addstr(' '+f'Score: {self.cb.scores[player]}'+'\n')
-        self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
-        self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
+        if player in self.cb.bids.keys():
+            self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
+        if len(self.cb.bids.values()) == 4:
+            self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
         self.info_windows[player_position].box()
         self.info_windows[player_position].refresh()
+
+    def refresh_all_info_windows(self):
+        for player in self.cb.players:
+            self.refresh_info_window(player)
 
     def draw_new_info_window(self):
         for i in range(len(self.cb.players)):
@@ -168,6 +182,26 @@ class GraphicsBoard:
                 self.info_windows[3].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
                 self.info_windows[3].box()
                 self.info_windows[3].refresh()
+
+    def refresh_hand_info_window(self, hand_number):
+        bid_total = sum(self.cb.bids.values())
+        self.hand_info_window.erase()
+        if len(self.cb.bids) < 4:
+            self.hand_info_window.attron(curses.color_pair(3))
+            self.hand_info_window.addstr('\n '+f'HAND: {hand_number}'+'\n')
+            self.hand_info_window.addstr(' '+f'Bids Taken: {bid_total}'+'\n')
+            self.hand_info_window.addstr(' '+f'Bids Remaining: {hand_number - bid_total}'+'\n')
+        else:
+            if bid_total > hand_number:
+                self.hand_info_window.attron(curses.color_pair(2))
+                self.hand_info_window.addstr('\n '+f'HAND: {hand_number}'+'\n')
+                self.hand_info_window.addstr('\n '+f'OVERBID (+{bid_total - hand_number})'+'\n')
+            else:
+                self.hand_info_window.attron(curses.color_pair(1))
+                self.hand_info_window.addstr('\n '+f'HAND: {hand_number}'+'\n')
+                self.hand_info_window.addstr('\n '+f'UNDERBID ({bid_total - hand_number})'+'\n')
+        self.hand_info_window.box()
+        self.hand_info_window.refresh()
 
     def get_card(self):
         self.hand_position = 0

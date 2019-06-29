@@ -118,6 +118,7 @@ class ClientBoard:
         self.trump_card = None
         self.lead_card = None
         self.dealer = None
+        self.actor = None
 
     def get_hand(self, dealt_hand):
         for player in self.hands.keys():
