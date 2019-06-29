@@ -124,7 +124,7 @@ if __name__ == "__main__":
         size = shutil.get_terminal_size()
         assert (size.columns >= 101 and size.lines >= 58), "Resize terminal to at least 101x58"
         host, port = sys.argv[1].split(":")
-        c = Client(host, int(port), sys.argv[2], len(sys.argv) == 4)
+        c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
         while 1:
             c.Loop()
             sleep(0.001)

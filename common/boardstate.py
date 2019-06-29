@@ -72,10 +72,10 @@ class GameBoard:
             assert (self.in_play[player] is not None), "Finish trick: not everyone has played a card"
 
         # calculate winner
-        if self.trump_card:
-            winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, self.trump_card.suit))
-        else:
-            winner = max(self.in_play, key=lambda x: Card.trick_value(self.in_play[x], self.led_suit, None))
+        winner = max(self.in_play, key=lambda x: Card.trick_value(
+            self.in_play[x], 
+            self.led_suit, 
+            self.trump_card.suit if self.trump_card else None))
         print("Winner is", winner)
         # move cards in play to the winner's pile
         self.cards_taken[winner].extend(self.in_play.values())
