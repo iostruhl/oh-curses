@@ -93,6 +93,10 @@ class Client(ConnectionListener):
     def Network_broadcast_dealer(self, data):
         self.cb.dealer = data['dealer']
 
+    def Network_broadcast_current_actor(self, data):
+        self.cb.actor = data['actor']
+        self.grb.refresh_all_info_windows()
+
     # built in stuff
 
     def Network_connected(self, data):

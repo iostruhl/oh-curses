@@ -122,13 +122,23 @@ class GraphicsBoard:
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
         if player == self.cb.dealer:
             self.info_windows[player_position].attron(curses.color_pair(5))
+        if player == self.cb.actor:
+            self.info_windows[player_position].attron(curses.A_BLINK)
+        else:
+            self.info_windows[player_position].attroff(curses.A_BLINK)
         self.info_windows[player_position].erase()
         self.info_windows[player_position].addstr('\n '+self.short_name(player)+'\n')
         self.info_windows[player_position].addstr(' '+f'Score: {self.cb.scores[player]}'+'\n')
-        self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
-        self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
+        if player in self.cb.bids.keys():
+            self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
+        if len(self.cb.bids.values()) == 4:
+            self.info_windows[player_position].addstr(' '+f'Won: {self.cb.won[player]}')
         self.info_windows[player_position].box()
         self.info_windows[player_position].refresh()
+
+    def refresh_all_info_windows(self):
+        for player in self.cb.players:
+            self.refresh_info_window(player)
 
     def draw_new_info_window(self):
         for i in range(len(self.cb.players)):
