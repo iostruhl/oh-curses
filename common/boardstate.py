@@ -117,6 +117,7 @@ class ClientBoard:
         self.bids = dict()
         self.trump_card = None
         self.lead_card = None
+        self.dealer = None
 
     def get_hand(self, dealt_hand):
         for player in self.hands.keys():
