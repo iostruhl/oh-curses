@@ -128,5 +128,3 @@ dmypy.json
 *.swp
 
 # Added by Isaac
-credentials.json
-token.pickle
