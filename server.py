@@ -222,7 +222,6 @@ class OHServer(Server):
             })
         if not self.untracked:
             sheets_logging.log_game(self.gb.scores)
-        exit(0)
 
 # Run the server
 if __name__ == "__main__":

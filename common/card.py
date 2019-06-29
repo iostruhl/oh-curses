@@ -1,3 +1,4 @@
+from .card_representations import individual_ascii_rep
 class Card:
     rank_values = {
         "2"  : 2,
@@ -76,37 +77,18 @@ class Card:
     # Prints the visual representation of the card, for curses graphics
     def ascii_rep(self) -> str:
         if (self.visible):
-            return (
-                "\
-┌─────────┐\n\
-│{}{}     │\n\
-│         │\n\
-│         │\n\
-│    {}   │\n\
-│         │\n\
-│         │\n\
-│       {}│\n\
-└─────────┘\
-                ".format(
-                    format(self.rank, ' <2'),
-                    format(self.suit_ascii[self.suit], ' ^2'),
-                    format(self.suit_ascii[self.suit], ' ^2'),
-                    format(self.rank, ' >2'),
-                    )
-                )
+            return individual_ascii_rep(self.rank, self.suit_ascii[self.suit])
         else:
             return (
-                "\
-┌─────────┐\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-│░░░░░░░░░│\n\
-└─────────┘\
-")
+                "┌─────────┐\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "│░░░░░░░░░│\n"
+                "└─────────┘")
 
 # testing card
 if __name__ == "__main__":
