@@ -104,11 +104,14 @@ class OHServer(Server):
         self.ready_count += 1
         if (self.ready_count == 4):
             if (self.should_resume):
-                self.start_game() # SHOULD EVENTUALLY CALL RESUME, IDK WHY IT DOESN'T WORK RN
+                self.resume_game() # SHOULD EVENTUALLY CALL RESUME, IDK WHY IT DOESN'T WORK RN
             else:
                 self.start_game()
 
     def resume_game(self):
+        for u in self.users:
+            assert u.name in self.name_to_user
+        self.name_to_user = {u.name:u for u in self.users}
         self.send_all({
             'action': "start",
             'players': self.gb.players
