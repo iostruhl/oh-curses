@@ -90,6 +90,9 @@ class Client(ConnectionListener):
             self.cb.scores[player] = data['scores'][player]
         self.grb.clean_board()
 
+    def Network_broadcast_dealer(self, data):
+        self.cb.dealer = data['dealer']
+
     # built in stuff
 
     def Network_connected(self, data):

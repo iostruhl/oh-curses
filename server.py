@@ -114,6 +114,7 @@ class OHServer(Server):
 
     def start_hand(self):
         self.gb.deal_hand(self.hand_num)
+        self.send_all({'action': "broadcast_dealer", 'dealer': self.gb.players[(self.hand_num + 2) % 4]})
         for player in self.gb.players:
             print("Sending to", player)
 
