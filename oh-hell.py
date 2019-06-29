@@ -96,6 +96,7 @@ class Client(ConnectionListener):
     def Network_broadcast_current_actor(self, data):
         self.cb.actor = data['actor']
         self.grb.refresh_all_info_windows()
+        self.grb.refresh_hand_info_window(data['hand_num'])
 
     # built in stuff
 
