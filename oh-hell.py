@@ -38,7 +38,7 @@ class Client(ConnectionListener):
 
     def Network_pause(self, data):
         print("*** USER HAS DISCONNECTED, FATAL ***")
-        exit()
+        exit(1)
 
     def Network_start(self, data):
         self.cb = ClientBoard(data['players'], self.name)

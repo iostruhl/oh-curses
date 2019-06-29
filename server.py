@@ -4,7 +4,7 @@ from time import sleep
 from common.card import Card
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
-from common import sheets_logging as sl
+from common import sheets_logging
 from fuzzywuzzy import process
 
 class ClientChannel(Channel):
@@ -21,9 +21,13 @@ class ClientChannel(Channel):
 
     def Network_name(self, data):
         print("Client", self.name, "sent", data)
-        # chooses the best matched full name, so that we can log easily at the end
-        choices = ["Ben Harpe", "Alex Wulff", "Alex Mariona", "Owen Schafer", "Isaac Struhl"]
-        self.name = process.extract(data['name'], choices, limit=1)[0][0]
+        if self._server.untracked:
+            self.name = data['name']
+        else:
+            # chooses the best matched full name, so that we can log easily at the end
+            choices = ["Ben Harpe", "Alex Wulff", "Alex Mariona", "Owen Schafer", "Isaac Struhl"]
+            self.name = process.extract(data['name'], choices, limit=1)[0][0]
+
         self._server.send_users()
         self.Send({
                 'action': "server_name",
@@ -47,7 +51,7 @@ class ClientChannel(Channel):
 class OHServer(Server):
     channelClass = ClientChannel
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, untracked = False, *args, **kwargs):
         Server.__init__(self, *args, **kwargs)
         self.users = []
         self.name_to_user = dict()
@@ -56,6 +60,8 @@ class OHServer(Server):
         self.scores = dict()
         self.next_to_play_idx = 0
         self.gb = None
+        self.should_resume = False
+        self.untracked = untracked
         print("Server launched")
 
     def Connected(self, channel, addr):
@@ -70,6 +76,7 @@ class OHServer(Server):
         self.users.remove(player)
         self.ready_count -= 1
         if (self.gb):
+            self.gb.collect_cards()
             self.send_pause()
 
     def send_pause(self):
@@ -96,7 +103,17 @@ class OHServer(Server):
     def handle_ready(self):
         self.ready_count += 1
         if (self.ready_count == 4):
-            self.start_game()
+            if (self.should_resume):
+                self.start_game() # SHOULD EVENTUALLY CALL RESUME, IDK WHY IT DOESN'T WORK RN
+            else:
+                self.start_game()
+
+    def resume_game(self):
+        self.send_all({
+            'action': "start",
+            'players': self.gb.players
+            })
+        self.start_hand()
 
     def start_game(self):
         print("Game starting.")
@@ -109,11 +126,13 @@ class OHServer(Server):
             'players': self.gb.players
             })
 
+        self.should_resume = True
         self.start_hand()
 
 
     def start_hand(self):
         self.gb.deal_hand(self.hand_num)
+        self.send_all({'action': "broadcast_dealer", 'dealer': self.gb.players[(self.hand_num + 2) % 4]})
         for player in self.gb.players:
             print("Sending to", player)
 
@@ -133,7 +152,6 @@ class OHServer(Server):
     def handle_bid(self, player: str, bid: int):
         self.send_all({'action': "broadcast_bid", 'player': player, 'bid': bid})
         self.gb.bid(player, bid)
-        # sleep(1)
         if (len(self.gb.bids) == 4):
             self.next_to_play_idx = (self.hand_num - 1) % 4 # set to dealer, incremented by handle_play
             self.send_all({'action': "start_hand"})
@@ -198,16 +216,21 @@ class OHServer(Server):
             'winner': winner,
             'scores': self.gb.scores
             })
-        sl.log_game(self.gb.scores)
-        exit()
+        if not self.untracked:
+            sheets_logging.log_game(self.gb.scores)
+        exit(0)
 
 # Run the server
 if __name__ == "__main__":
     # get command line argument of server, port
-    if len(sys.argv) != 2:
-        print("Usage:", sys.argv[0], "host:port")
+    if len(sys.argv) not in [2, 3]:
+        print("Usage:", sys.argv[0], "host:port <untracked>")
         print("e.g.", sys.argv[0], "localhost:31425")
-    else:
-        host, port = sys.argv[1].split(":")
-        s = OHServer(localaddr=(host, int(port)))
+        print("or", sys.argv[0], "localhost:31425 untracked")
+        exit(1)
+    host, port = sys.argv[1].split(":")
+    s = OHServer(untracked = (len(sys.argv) == 3), localaddr = (host, int(port)))
+    try:
         s.Launch()
+    except:
+        print("\nServer killed by signal.")
