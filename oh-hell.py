@@ -137,7 +137,7 @@ if __name__ == "__main__":
         c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
         while 1:
             try:
-            c.Loop()
-            sleep(0.001)
+                c.Loop()
+                sleep(0.001)
             except KeyboardInterrupt: # Disable ctrl-C
                 pass
