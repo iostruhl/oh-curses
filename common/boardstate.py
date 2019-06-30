@@ -10,6 +10,7 @@ class GameBoard:
         self.in_play = dict()
         self.hands = {player:[] for player in self.players}
         self.scores = {player:0 for player in self.players}
+        self.running_scores = {player:[] for player in self.players}
         self.bids = dict()
         self.cards_taken = {player:[] for player in self.players}
         self.trump_card = None
@@ -94,6 +95,7 @@ class GameBoard:
                 handscores[player] = int(-5 * (diff * (diff + 1)) / 2)
             # update aggreate scores
             self.scores[player] += handscores[player]
+            self.running_scores[player].append(self.scores[player])
 
         return handscores
 
@@ -114,6 +116,7 @@ class ClientBoard:
         self.won = {player:0 for player in players}
         self.in_play = {player:None for player in players}
         self.scores = {player:0 for player in players}
+        self.running_scores = {player:[] for player in players}
         self.bids = dict()
         self.trump_card = None
         self.lead_card = None

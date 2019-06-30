@@ -115,7 +115,8 @@ class OHServer(Server):
         self.send_all({
             'action': "resume",
             'players': self.gb.players,
-            'scores': self.gb.scores
+            'scores': self.gb.scores,
+            'running_scores': self.gb.running_scores
             })
         self.start_hand()
 
@@ -204,7 +205,8 @@ class OHServer(Server):
         scores = self.gb.update_scores()
         self.send_all({
             'action': "broadcast_hand_done",
-            'scores': self.gb.scores
+            'scores': self.gb.scores,
+            'hand_num': self.hand_num
             })
         self.gb.collect_cards()
         self.hand_num += 1

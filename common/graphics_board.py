@@ -13,6 +13,8 @@ B_HEIGHT = 3
 B_WIDTH = 4
 H_HEIGHT = 5
 H_WIDTH = 20
+S_HEIGHT = 29
+S_WIDTH = 68
 
 class GraphicsBoard:
 
@@ -42,9 +44,10 @@ class GraphicsBoard:
         self.trump_window = None
         self.info_windows = [None for player in cb.players]
 
-        self.cols_offset = (curses.COLS - 101) // 2
+        self.cols_offset = (curses.COLS - 181) // 2
         self.rows_offset = (curses.LINES - 58) // 2
         self.hand_info_window = curses.newwin(H_HEIGHT, H_WIDTH, PADDING+self.rows_offset, (3*PADDING)+(2*C_WIDTH)+(12*H_SPACING)+self.cols_offset)
+        self.score_window = curses.newwin(S_HEIGHT, S_WIDTH, PADDING+self.rows_offset, (6*PADDING)+(2*C_WIDTH)+(12*H_SPACING)+(H_WIDTH)+self.cols_offset)
 
     def __del__(self):
         curses.nocbreak()
@@ -101,6 +104,7 @@ class GraphicsBoard:
             self.draw_hand(self.cb.players[i])
         self.draw_trump()
         self.draw_new_info_window()
+        self.draw_score_window()
 
     def collapse_hand(self, player_position):
         window_position = (player_position - self.cb.active_position) % 4
@@ -212,6 +216,24 @@ class GraphicsBoard:
                 self.hand_info_window.addstr('\n '+f'UNDERBID ({bid_total - hand_number})'+'\n')
         self.hand_info_window.box()
         self.hand_info_window.refresh()
+
+    def draw_score_window(self):
+        self.score_window.erase()
+        for i in range(1, 14):
+            self.score_window.hline(i*2, 0, curses.ACS_HLINE, S_WIDTH)
+        self.score_window.vline(0, 7, curses.ACS_VLINE, S_HEIGHT)
+        for i in range(1, 4):
+            self.score_window.vline(0, 7 + i*15, curses.ACS_VLINE, S_HEIGHT)
+        self.score_window.box()
+        self.score_window.addstr(1, 1, " Hand")
+        for i in range(1, 14):
+            self.score_window.addstr(1 + i*2, 1, f"{i}".rjust(5))
+        for player in self.cb.players:
+            self.score_window.addstr(1, 8 + self.cb.players.index(player)*15, player.center(13), curses.A_BOLD)
+        for player in self.cb.players:
+            for i in range(len(self.cb.running_scores[player])):
+                self.score_window.addstr(1 + (i+1)*2, 8 + self.cb.players.index(player)*15, f"{self.cb.running_scores[player][i]}".rjust(13))
+        self.score_window.refresh()
 
     def get_card(self):
         self.hand_position = 0
@@ -337,6 +359,7 @@ class GraphicsBoard:
 
     def end_game(self):
         self.draw_new_info_window()
+        self.draw_score_window()
         curses.flushinp()
         key = self.stdscr.getch()
         exit()

@@ -45,6 +45,7 @@ class Client(ConnectionListener):
         self.cb = ClientBoard(data['players'], self.name)
         for player in self.cb.players:
             self.cb.scores[player] = data['scores'][player]
+        self.cb.running_scores = data['running_scores']
         self.grb = graphics_board.GraphicsBoard(self.cb)
 
     def Network_start(self, data):
@@ -98,6 +99,7 @@ class Client(ConnectionListener):
         for player in self.cb.players:
             self.cb.won[player] = 0
             self.cb.scores[player] = data['scores'][player]
+            self.cb.running_scores[player].append(data['scores'][player])
         self.grb.clean_board()
 
     def Network_broadcast_dealer(self, data):
@@ -132,7 +134,7 @@ if __name__ == "__main__":
         print("e.g.", sys.argv[0], "localhost:8080 Isaac")
     else:
         size = shutil.get_terminal_size()
-        assert (size.columns >= 101 and size.lines >= 58), "Resize terminal to at least 101x58"
+        assert (size.columns >= 181 and size.lines >= 58), "Resize terminal to at least 181x58"
         host, port = sys.argv[1].split(":")
         c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
         while 1:
