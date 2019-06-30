@@ -108,6 +108,10 @@ class Client(ConnectionListener):
         self.grb.refresh_all_info_windows()
         self.grb.refresh_hand_info_window(data['hand_num'])
 
+    def Network_broadcast_end_game(self, data):
+        self.cb.winner = data['winner']
+        self.grb.end_game()
+
     # built in stuff
 
     def Network_connected(self, data):
@@ -132,8 +136,8 @@ if __name__ == "__main__":
         host, port = sys.argv[1].split(":")
         c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
         while 1:
-            #try:
+            try:
             c.Loop()
             sleep(0.001)
-            #except KeyboardInterrupt: # Disable ctrl-C
-            #    pass
+            except KeyboardInterrupt: # Disable ctrl-C
+                pass

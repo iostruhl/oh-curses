@@ -29,6 +29,7 @@ class GraphicsBoard:
         curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(6, curses.COLOR_YELLOW, curses.COLOR_BLACK)
         self.stdscr.erase()
         self.stdscr.refresh()
 
@@ -124,14 +125,15 @@ class GraphicsBoard:
 
     def refresh_info_window(self, player):
         player_position = (self.cb.players.index(player) - self.cb.active_position) % 4
+        self.info_windows[player_position].erase()
         if player == self.cb.dealer:
             self.info_windows[player_position].attron(curses.color_pair(5))
         if player == self.cb.actor:
             self.info_windows[player_position].attron(curses.A_BLINK)
         else:
             self.info_windows[player_position].attroff(curses.A_BLINK)
-        self.info_windows[player_position].erase()
         self.info_windows[player_position].addstr('\n '+self.short_name(player)+'\n')
+        self.info_windows[player_position].attroff(curses.A_BLINK)
         self.info_windows[player_position].addstr(' '+f'Score: {self.cb.scores[player]}'+'\n')
         if player in self.cb.bids.keys():
             self.info_windows[player_position].addstr(' '+f'Bid: {self.cb.bids[player]}'+'\n')
@@ -148,8 +150,10 @@ class GraphicsBoard:
        for i in range(len(self.cb.players)):
             if i == self.cb.active_position:
                 self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (3*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+self.rows_offset, (1*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
-                if self.cb.players[i] == self.cb.dealer:
+                if self.cb.players[i] == self.cb.dealer and not self.cb.winner:
                     self.info_windows[0].attron(curses.color_pair(5))
+                if self.cb.players[i] == self.cb.winner:
+                    self.info_windows[0].attron(curses.color_pair(6))
                 self.info_windows[0].erase()
                 self.info_windows[0].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[0].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
@@ -157,8 +161,10 @@ class GraphicsBoard:
                 self.info_windows[0].refresh()
             elif i == (self.cb.active_position + 1) % 4:
                 self.info_windows[1] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING)+self.rows_offset, (2*PADDING)+C_WIDTH+self.cols_offset)
-                if self.cb.players[i] == self.cb.dealer:
+                if self.cb.players[i] == self.cb.dealer and not self.cb.winner:
                     self.info_windows[1].attron(curses.color_pair(5))
+                if self.cb.players[i] == self.cb.winner:
+                    self.info_windows[1].attron(curses.color_pair(6))
                 self.info_windows[1].erase()
                 self.info_windows[1].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[1].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
@@ -166,8 +172,10 @@ class GraphicsBoard:
                 self.info_windows[1].refresh()
             elif i == (self.cb.active_position + 2) % 4:
                 self.info_windows[2] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT-PADDING+self.rows_offset, (1*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
-                if self.cb.players[i] == self.cb.dealer:
+                if self.cb.players[i] == self.cb.dealer and not self.cb.winner:
                     self.info_windows[2].attron(curses.color_pair(5))
+                if self.cb.players[i] == self.cb.winner:
+                    self.info_windows[2].attron(curses.color_pair(6))
                 self.info_windows[2].erase()
                 self.info_windows[2].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[2].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
@@ -175,8 +183,10 @@ class GraphicsBoard:
                 self.info_windows[2].refresh()
             elif i == (self.cb.active_position + 3) % 4:
                 self.info_windows[3] = curses.newwin(I_HEIGHT, I_WIDTH, C_HEIGHT+(12*V_SPACING)+self.rows_offset, C_WIDTH+(12*H_SPACING)+self.cols_offset)
-                if self.cb.players[i] == self.cb.dealer:
+                if self.cb.players[i] == self.cb.dealer and not self.cb.winner:
                     self.info_windows[3].attron(curses.color_pair(5))
+                if self.cb.players[i] == self.cb.winner:
+                    self.info_windows[3].attron(curses.color_pair(6))
                 self.info_windows[3].erase()
                 self.info_windows[3].addstr('\n '+self.short_name(self.cb.players[i])+'\n')
                 self.info_windows[3].addstr(' '+f'Score: {self.cb.scores[self.cb.players[i]]}'+'\n')
@@ -324,6 +334,12 @@ class GraphicsBoard:
             self.trump_window.attron(curses.color_pair(self.cb.trump_card.color()))
             self.trump_window.addstr(self.cb.trump_card.ascii_rep())
             self.trump_window.refresh()
+
+    def end_game(self):
+        self.draw_new_info_window()
+        curses.flushinp()
+        key = self.stdscr.getch()
+        exit()
 
     def short_name(self, name):
         if name.split(' ')[0].lower() == "alex":
