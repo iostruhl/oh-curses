@@ -145,7 +145,7 @@ class GraphicsBoard:
             self.refresh_info_window(player)
 
     def draw_new_info_window(self):
-        for i in range(len(self.cb.players)):
+       for i in range(len(self.cb.players)):
             if i == self.cb.active_position:
                 self.info_windows[0] = curses.newwin(I_HEIGHT, I_WIDTH, (3*PADDING)+(2*C_HEIGHT)+(12*V_SPACING)+self.rows_offset, (1*PADDING)+C_WIDTH+(6*H_SPACING)+self.cols_offset)
                 if self.cb.players[i] == self.cb.dealer:

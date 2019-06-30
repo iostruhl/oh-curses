@@ -73,8 +73,8 @@ class GameBoard:
 
         # calculate winner
         winner = max(self.in_play, key=lambda x: Card.trick_value(
-            self.in_play[x], 
-            self.led_suit, 
+            self.in_play[x],
+            self.led_suit,
             self.trump_card.suit if self.trump_card else None))
         print("Winner is", winner)
         # move cards in play to the winner's pile

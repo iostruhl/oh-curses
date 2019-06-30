@@ -113,8 +113,9 @@ class OHServer(Server):
             assert u.name in self.name_to_user
         self.name_to_user = {u.name:u for u in self.users}
         self.send_all({
-            'action': "start",
-            'players': self.gb.players
+            'action': "resume",
+            'players': self.gb.players,
+            'scores': self.gb.scores
             })
         self.start_hand()
 

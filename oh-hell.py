@@ -41,6 +41,12 @@ class Client(ConnectionListener):
         print("*** USER HAS DISCONNECTED, FATAL ***")
         exit(1)
 
+    def Network_resume(self, data):
+        self.cb = ClientBoard(data['players'], self.name)
+        for player in self.cb.players:
+            self.cb.scores[player] = data['scores'][player]
+        self.grb = graphics_board.GraphicsBoard(self.cb)
+
     def Network_start(self, data):
         self.cb = ClientBoard(data['players'], self.name)
         self.grb = graphics_board.GraphicsBoard(self.cb)
@@ -126,8 +132,8 @@ if __name__ == "__main__":
         host, port = sys.argv[1].split(":")
         c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
         while 1:
-            try:
-                c.Loop()
-                sleep(0.001)
-            except KeyboardInterrupt: # Disable ctrl-C
-                pass
+            #try:
+            c.Loop()
+            sleep(0.001)
+            #except KeyboardInterrupt: # Disable ctrl-C
+            #    pass
