@@ -65,7 +65,8 @@ class OHServer(Server):
         print("Server launched")
 
     def Connected(self, channel, addr):
-        self.add_user(channel)
+        if len(self.users) < 4:
+            self.add_user(channel)
 
     def add_user(self, user):
         print("New Player" + str(user.addr))
