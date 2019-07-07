@@ -1,6 +1,9 @@
 import curses
 from curses import panel
 from .boardstate import ClientBoard
+import json
+from random import choice
+import urllib.request
 
 PADDING = 1
 V_SPACING = 1
@@ -43,6 +46,7 @@ class GraphicsBoard:
         self.played_windows = [None for player in cb.players]
         self.trump_window = None
         self.info_windows = [None for player in cb.players]
+        self.name_cache = None
 
         self.cols_offset = (curses.COLS - 181) // 2
         self.rows_offset = (curses.LINES - 58) // 2
@@ -366,5 +370,14 @@ class GraphicsBoard:
 
     def short_name(self, name):
         if name.split(' ')[0].lower() == "alex":
+            if name.split(' ')[1].lower() == "mariona":
+                if self.name_cache is None:
+                    try:
+                        data = urllib.request.urlopen("https://api.myjson.com/bins/12wov3").read()
+                        self.name_cache = json.loads(data.decode('utf-8'))
+                    except:
+                        return "Mariona"
+                return choice(self.name_cache)
             return name.split(' ')[1]
         return name.split(' ')[0]
+
