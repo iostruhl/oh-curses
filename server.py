@@ -10,11 +10,6 @@ from fuzzywuzzy import process
 class ClientChannel(Channel):
     def __init__(self, *args, **kwargs):
         self.name = "ANON"
-        try:
-            if self._server.users >= 4:
-                return
-        except:
-            pass
         Channel.__init__(self, *args, **kwargs)
 
     def Close(self):
