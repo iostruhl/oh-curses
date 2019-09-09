@@ -1,34 +1,26 @@
 from .card_representations import individual_ascii_rep
+
+
 class Card:
     rank_values = {
-        "2"  : 2,
-        "3"  : 3,
-        "4"  : 4,
-        "5"  : 5,
-        "6"  : 6,
-        "7"  : 7,
-        "8"  : 8,
-        "9"  : 9,
-        "10" : 10,
-        "J"  : 11,
-        "Q"  : 12,
-        "K"  : 13,
-        "A"  : 14
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        "10": 10,
+        "J": 11,
+        "Q": 12,
+        "K": 13,
+        "A": 14
     }
 
-    suit_ascii = {
-        "clubs"    : '♣',
-        "diamonds" : '♦',
-        "spades"   : '♠',
-        "hearts"   : '♥'
-    }
+    suit_ascii = {"clubs": '♣', "diamonds": '♦', "spades": '♠', "hearts": '♥'}
 
-    colors = {
-        "spades"   : 0,
-        "hearts"   : 1,
-        "clubs"    : 2,
-        "diamonds" : 4
-    }
+    colors = {"spades": 0, "hearts": 1, "clubs": 2, "diamonds": 4}
 
     def __init__(self, rank: str = None, suit: str = None):
         self.rank = rank
@@ -79,16 +71,16 @@ class Card:
         if (self.visible):
             return individual_ascii_rep(self.rank, self.suit_ascii[self.suit])
         else:
-            return (
-                "┌─────────┐\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "│░░░░░░░░░│\n"
-                "└─────────┘")
+            return ("┌─────────┐\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "│░░░░░░░░░│\n"
+                    "└─────────┘")
+
 
 # testing card
 if __name__ == "__main__":

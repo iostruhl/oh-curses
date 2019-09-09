@@ -1,18 +1,20 @@
 import curses
 
-class Menu:
 
+class Menu:
     def __init__(self, items, stdscreen):
-        self.window = stdscreen.subwin(0,0)
+        self.window = stdscreen.subwin(0, 0)
         self.window.keypad(True)
 
         self.items = items
-        self.items.append(('exit','exit'))
+        self.items.append(('exit', 'exit'))
         self.item_length = curses.COLS - 2
         self.item_height = 3
-        self.item_windows = [curses.newwin(self.item_height, self.item_length,
-                                           self.item_height * i, 1)
-                             for i in range(len(self.items))]
+        self.item_windows = [
+            curses.newwin(self.item_height, self.item_length,
+                          self.item_height * i, 1)
+            for i in range(len(self.items))
+        ]
         self.position = 0
 
     def navigate(self, n):
@@ -20,14 +22,16 @@ class Menu:
         if self.position < 0:
             self.position = 0
         elif self.position >= len(self.items):
-            self.position = len(self.items)-1
+            self.position = len(self.items) - 1
 
     def resize(self):
-        curses.update_lines_cols();
+        curses.update_lines_cols()
         self.item_length = curses.COLS - 2
-        self.item_windows = [curses.newwin(self.item_height, self.item_length,
-                                           self.item_height * i, 1)
-                             for i in range(len(self.items))]
+        self.item_windows = [
+            curses.newwin(self.item_height, self.item_length,
+                          self.item_height * i, 1)
+            for i in range(len(self.items))
+        ]
         self.window.clear()
         self.window.refresh()
 
@@ -47,16 +51,16 @@ class Menu:
                 # draw menu box
                 msg = item[0]
                 self.item_windows[index].box()
-                self.item_windows[index].addstr(self.item_height // 2,
-                                                (self.item_length - len(msg)) // 2,
-                                                msg, mode)
+                self.item_windows[index].addstr(
+                    self.item_height // 2, (self.item_length - len(msg)) // 2,
+                    msg, mode)
                 self.item_windows[index].refresh()
 
             # wait on input
             key = self.window.getch()
 
             if key in [curses.KEY_ENTER, ord('\n')]:
-                if self.position == len(self.items)-1:
+                if self.position == len(self.items) - 1:
                     break
                 else:
                     self.items[self.position][1]()
@@ -73,24 +77,18 @@ class Menu:
 
 
 class MyApp:
-
     def __init__(self, stdscreen):
         self.screen = stdscreen
         curses.curs_set(0)
 
-        submenu_items = [
-                ('beep', curses.beep),
-                ('flash', curses.flash)
-                ]
+        submenu_items = [('beep', curses.beep), ('flash', curses.flash)]
         submenu = Menu(submenu_items, self.screen)
 
-        main_menu_items = [
-                ('beep', curses.beep),
-                ('flash', curses.flash),
-                ('submenu', submenu.display)
-                ]
+        main_menu_items = [('beep', curses.beep), ('flash', curses.flash),
+                           ('submenu', submenu.display)]
         main_menu = Menu(main_menu_items, self.screen)
         main_menu.display()
+
 
 if __name__ == '__main__':
     curses.wrapper(MyApp)

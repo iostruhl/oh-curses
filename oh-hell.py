@@ -8,8 +8,9 @@ import shutil
 
 from PodSixNet.Connection import connection, ConnectionListener
 
+
 class Client(ConnectionListener):
-    def __init__(self, host, port, name = "ANON", sort_hand_ascending = False):
+    def __init__(self, host, port, name="ANON", sort_hand_ascending=False):
         self.Connect((host, port))
         print("Oh Hell client started")
         print("Ctrl-C to exit")
@@ -32,10 +33,7 @@ class Client(ConnectionListener):
     def Network_server_name(self, data):
         print("Server set name to", data['name'])
         self.name = data['name']
-        connection.Send({
-                'action': "ready",
-                'name': self.name
-            })
+        connection.Send({'action': "ready", 'name': self.name})
 
     def Network_pause(self, data):
         print("*** USER HAS DISCONNECTED, FATAL ***")
@@ -58,7 +56,8 @@ class Client(ConnectionListener):
             data['hand'] = data['hand'][::-1]
         self.cb.get_hand(data['hand'])
         if data['trump_card']:
-            self.cb.trump_card = Card(data['trump_card'][0], data['trump_card'][1])
+            self.cb.trump_card = Card(data['trump_card'][0],
+                                      data['trump_card'][1])
             self.cb.trump_card.show()
         else:
             self.cb.trump_card = None
@@ -74,7 +73,11 @@ class Client(ConnectionListener):
 
     def Network_play_card(self, data):
         card = self.grb.get_card()
-        connection.Send({'action': 'play', 'card': card.to_array(), 'lead': data['lead']})
+        connection.Send({
+            'action': 'play',
+            'card': card.to_array(),
+            'lead': data['lead']
+        })
 
     def Network_broadcast_played_card(self, data):
         card = Card(data['card'][0], data['card'][1])
@@ -85,7 +88,7 @@ class Client(ConnectionListener):
         self.grb.play_card(data['player'])
 
     def Network_broadcast_trick_winner(self, data):
-        self.cb.in_play = {player:None for player in self.cb.players}
+        self.cb.in_play = {player: None for player in self.cb.players}
         self.cb.lead_card = None
         self.cb.won[data['player']] += 1
         sleep(2)
@@ -127,16 +130,21 @@ class Client(ConnectionListener):
         print('Server disconnected')
         exit()
 
+
 # Run the client
 if __name__ == "__main__":
-    if len(sys.argv) not in [3,4]:
+    if len(sys.argv) not in [3, 4]:
         print("Usage:", sys.argv[0], "host:port name [--sort_hand_ascending]")
         print("e.g.", sys.argv[0], "localhost:8080 Isaac")
     else:
         size = shutil.get_terminal_size()
-        assert (size.columns >= 181 and size.lines >= 58), "Resize terminal to at least 181x58"
+        assert (size.columns >= 181
+                and size.lines >= 58), "Resize terminal to at least 181x58"
         host, port = sys.argv[1].split(":")
-        c = Client(host, int(port), name = sys.argv[2], sort_hand_ascending = (len(sys.argv) == 4))
+        c = Client(host,
+                   int(port),
+                   name=sys.argv[2],
+                   sort_hand_ascending=(len(sys.argv) == 4))
         while 1:
             c.Loop()
             sleep(0.001)
